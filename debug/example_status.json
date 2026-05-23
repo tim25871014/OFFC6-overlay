@@ -1,0 +1,44 @@
+{
+    "generatedAt": "2026-05-23T14:10:09.976Z",
+    "round": 3,
+    "stadiumCards": [
+        "S2",
+        "S5"
+    ],
+    "teams": {
+        "red": {
+            "team": "red",
+            "teamName": "瘋狂 Red Team",
+            "hp": 5300,
+            "handLimit": 5,
+            "totalAtk": 0,
+            "totalAtkBonus": 0,
+            "blessings": [],
+            "disasters": [],
+            "hand": [
+                "M14",
+                "M18",
+                "T15",
+                "T13"
+            ]
+        },
+        "blue": {
+            "team": "blue",
+            "teamName": "超級 Blue Team",
+            "hp": 6100,
+            "handLimit": 4,
+            "totalAtk": 0,
+            "totalAtkBonus": 0,
+            "blessings": [],
+            "disasters": [
+                "緊繃"
+            ],
+            "hand": [
+                "M12",
+                "M4",
+                "T19",
+                "T12"
+            ]
+        }
+    }
+}

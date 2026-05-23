@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+<head>
+    <script src="../_data/deps/vue.global.prod.js"></script>
+    <script src="../_data/deps/connection.js"></script>
+    <script src="../_data/deps/tailwind.min.js"></script>
+    <link rel="stylesheet" href="../_data/deps/style.css">
+</head>
+<body>
+<div id="main" class="absolute h-[1080px] w-[1920px] bg-[#cccccc]">
+
+    <div id="header" class="flex h-[200px] w-full bg-[#ff0000]">
+
+    </div>
+
+    <div id="content" class="h-[680px] w-full bg-[#00ffff]">
+
+    </div>
+
+    <div id="footer" class="relative bottom-0 flex h-[200px] w-full bg-[#0000ff]">
+
+        <div id="map-info" class="absolute top-0 flex w-[30%] flex-row bg-[#00ff00]">
+
+            <img id="map-bg" class="relative top-0 h-[150px] w-[400px] object-cover object-center" :src="BGUrl"></img>
+            <div id="map-stats" class="flex flex-col justify-center font-ed text-[25px]">
+
+                <p class="mx-5 my-0">SR: {{ SR }}</p>
+                <p class="mx-5 my-0">AR: {{ AR }}</p>
+                <p class="mx-5 my-0">OD: {{ OD }}</p>
+                <p class="mx-5 my-0">CS: {{ CS }}</p>
+
+            </div>
+
+        </div>
+
+        <div id="score-info" class="absolute top-0 left-1/2 flex w-[20%] -translate-x-1/2 flex-col bg-[#7733ff]">
+
+            <div id="score-bar" class="h-[30px] bg-[#ff00ff]" :style="{ width: BarWidth + 'px' }"></div>
+
+            <div id="score-display" class="flex flex-row items-center justify-center bg-[#ffff00]">
+                <p class="font-eb mr-5 text-red-500 text-[30px]">{{ RedScore }}</p>
+                <p class="font-eb ml-5 text-blue-500 text-[30px]">{{ BlueScore }}</p>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+<script src="script.js"></script>
+</body>
+</html>

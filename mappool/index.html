@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+<head>
+    <script src="../_data/deps/vue.global.prod.js"></script>
+    <script src="../_data/deps/connection.js"></script>
+    <script src="../_data/deps/tailwind.min.js"></script>
+    <link rel="stylesheet" href="../_data/deps/style.css">
+</head>
+<body>
+<div id="main" class="absolute h-[1080px] w-[1920px] bg-[#cccccc]">
+
+    <div id="header" class="flex h-[200px] w-full bg-[#ff0000]">
+
+    </div>
+
+    <div id="content" class="h-[880px] w-full bg-cyan-700 p-4 space-y-4 overflow-y-auto">
+
+        <div v-for="modGroup in mods" :key="modGroup.mod" class="flex flex-wrap justify-center gap-3">
+            <div
+                v-for="map in modGroup.maps"
+                :key="map.identifier"
+                class="w-[550px] h-[60px] rounded-[20px] bg-green-900 border-3 text-center 
+                    hover:translate-x-[2px] hover:translate-y-[2px] relative text-white font-eb text-[25px]"
+                :class="stateStyles[pickState[map.identifier]]"
+                @click="onPick($event, map.identifier, 'red')"
+                @contextmenu.prevent="onPick($event, map.identifier, 'blue')"
+            >
+                {{ map.identifier }}
+            </div>
+        </div>
+        
+    </div>
+
+</div>
+<script src="script.js"></script>
+</body>
+</html>
