@@ -7,19 +7,74 @@ body {
 }
 
 @font-face {
-	font-family: 'Eras Bold ITC';
-	src: url('../fonts/Eras\ Bold\ ITC.ttf');
+	font-family: 'ROG';
+	src: url('../fonts/ROGFONTS-REGULAR.OTF');
 }
 
 @font-face {
-	font-family: 'Eras Demi ITC';
-	src: url('../fonts/Eras\ Demi\ ITC.ttf');
+	font-family: 'Lexend';
+	src: url('../fonts/LexendDeca-VariableFont_wght.ttf');
 }
 
-.font-eb {
-	font-family: 'Eras Bold ITC', sans-serif;
+@font-face {
+	font-family: 'TPSans-Bold';
+	src: url('../fonts/TaipeiSansTCBeta-Bold.ttf');
 }
 
-.font-ed {
-	font-family: 'Eras Demi ITC', sans-serif;
+@font-face {
+	font-family: 'TPSans-Regular';
+	src: url('../fonts/TaipeiSansTCBeta-Regular.ttf');
+}
+
+@font-face {
+	font-family: 'TPSans-Light';
+	src: url('../fonts/TaipeiSansTCBeta-Light.ttf');
+}
+
+@font-face {
+	font-family: 'Maoken';
+	src: url('../fonts/MaokenAssortedSans-TC.ttf');
+}
+
+.font-rog {
+	font-family: 'ROG', 'Maoken', sans-serif;
+}
+
+.font-lexend-black {
+	font-family: 'Lexend', sans-serif;
+	font-weight: 700;
+}
+
+.font-lexend-regular {
+	font-family: 'Lexend', sans-serif;
+	font-weight: 400;
+}
+
+.font-tpsans-bold {
+	font-family: 'TPSans-Bold', sans-serif;
+}
+
+.font-tpsans-regular {
+	font-family: 'TPSans-Regular', sans-serif;
+}
+
+.font-tpsans-light {
+	font-family: 'TPSans-Light', sans-serif;
+}
+
+.font-maoken {
+	font-family: 'Maoken', sans-serif;
+}
+
+@keyframes scanline {
+	0% { background-size: 100% 0%; }
+	50% { background-size: 100% 100%; }
+	100% { background-size: 100% 0%; }
+}
+
+.scanline {
+	background-image: linear-gradient(to bottom, transparent 0%, rgba(255, 255, 255, 0.75) 50%, transparent 100%);
+	background-repeat: no-repeat;
+	background-position: top;
+	animation: scanline 5s linear infinite;
 }

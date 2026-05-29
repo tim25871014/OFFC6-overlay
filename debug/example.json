@@ -1926,17 +1926,36 @@
         "ipcState": 3,
         "bestOF": 9,
         "team": {
-            "left": "red紅隊",
-            "right": "blue藍隊"
+            "left": "Itsuki棗",
+            "right": "Nakuru藍月"
         },
         "points": {
             "left": 3,
             "right": 2
         },
-        "chat": [],
+        "chat": [
+            {
+            "time": "12:03",
+            "name": "pdpd123",
+            "messageBody": "Good luck!",
+            "team": "left"
+            },
+            {
+            "time": "12:04",
+            "name": "luke920118",
+            "messageBody": "好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎好笑嗎",
+            "team": "right"
+            },
+            {
+            "time": "12:04",
+            "name": "co-host",
+            "messageBody": "不好笑",
+            "team": "unknown"
+            }
+        ],
         "totalScore": {
             "left": 927830,
-            "right": 2023300
+            "right": 1023300
         },
         "clients": [
             {
@@ -2459,7 +2478,7 @@
                         "number": 0,
                         "name": "osu"
                     },
-                    "score": 2023300,
+                    "score": 1023300,
                     "accuracy": 91.79,
                     "healthBar": {
                         "normal": 100,

@@ -7,46 +7,193 @@
     <link rel="stylesheet" href="../_data/deps/style.css">
 </head>
 <body>
-<div id="main" class="absolute h-[1080px] w-[1920px] bg-[#cccccc]">
+<div id="main" class="absolute h-[1080px] w-[1920px] text-white">
 
-    <div id="header" class="flex h-[200px] w-full bg-[#ff0000]">
+    <video autoplay loop class="absolute top-0 left-0 -z-10">
+        <source src="../_data/video/gameplay.mp4" type="video/mp4" />
+    </video>
+
+    <div id="header" class="flex h-[156px] w-full relative">
+
+        <div id="stage" class="absolute top-[140px] left-[50%] transform -translate-x-1/2 font-rog text-[25px]"> {{ Stage }} </div>
+
+        <div class="absolute top-0 left-0 h-[1080px] w-[14px] bg-[#7ba4af] scanline"></div>
+        <div class="absolute top-0 right-0 h-[1080px] w-[14px] bg-[#7ba4af] scanline"></div>
+
+        <div id="team-info" class="flex justify-between flex-row w-full mx-10 my-7">
+
+            <!-- 紅隊資訊 -->
+            <div id="red-info" class="flex flex-row text-left relative">
+                <div class="flex flex-col gap-1 relative"> 
+                    <div id="red-avatar" class="w-[140px] h-[105px] border-[3.5px] border-red-950 bg-red-950 rounded-[10px] rounded-tr-none bg-cover bg-center"
+                        :style="{ backgroundImage: `url(${RedTeamAvatar})` }">
+                    </div>
+                    <p class="absolute w-[140px] top-[100px] left-0 font-lexend-black text-white text-[22px] text-center">ATK: {{ RedTeamATK }}</p>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <p class="px-4 text-[32px] h-[48px] w-[440px] font-rog bg-gradient-to-r from-red-950 to-transparent">{{ RedTeamName }}</p>
+                    <div class="red-hp-bar relative w-[250px] h-[44px] transform translate-x-[10px] flex items-center">
+                        <div class="absolute size-[100%] rounded-[10px] transition-[width] duration-300 ease-out"
+                            :style="{
+                                transform: 'skewX(-10deg)', 
+                                width: RedTeamHPPercent + '%',
+                                height: (RedTeamHPPercent < 7) ? '85%' : '100%',
+                                backgroundColor: hpColor(RedTeamHPPercent)
+                            }"></div>
+                        <div class="absolute size-[100%] rounded-[10px] border-[3px] border-white"
+                            :style="{ transform: 'skewX(-10deg)' }"></div>
+                        <p class="text-2xl absolute font-lexend-black text-shadow-lg text-white top-[50%] left-[50%] transform -translate-x-1/2 -translate-y-1/2">{{ RedTeamHP }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 藍隊資訊 -->
+            <div id="blue-info" class="flex flex-row-reverse text-right">
+                <div class="flex flex-col gap-1 relative"> 
+                    <div id="blue-avatar" class="w-[140px] h-[105px] border-[3.5px] border-blue-950 bg-blue-950 rounded-[10px] rounded-tl-none bg-cover bg-center"
+                        :style="{ backgroundImage: `url(${BlueTeamAvatar})` }">
+                    </div>
+                    <p class="absolute w-[140px] top-[100px] left-0 font-lexend-black text-white text-[22px] text-center">ATK: {{ BlueTeamATK }}</p>
+                </div>
+                <div class="flex flex-col gap-1 items-end">
+                    <p class="px-4 text-[32px] h-[48px] w-[440px] font-rog bg-gradient-to-l from-blue-950 to-transparent">{{ BlueTeamName }}</p>
+                    <div class="blue-hp-bar relative w-[250px] h-[44px] transform translate-x-[-10px]">
+                        <div class="absolute size-[100%] rounded-[10px] transition-[width] duration-300 ease-out"
+                            :style="{
+                                transform: 'skewX(10deg)', 
+                                right: '0',
+                                width: BlueTeamHPPercent + '%',
+                                height: (BlueTeamHPPercent < 7) ? '85%' : '100%',
+                                backgroundColor: hpColor(BlueTeamHPPercent)
+                            }"></div>
+                        <div class="absolute size-[100%] rounded-[10px] border-[3px] border-white"
+                            :style="{ transform: 'skewX(10deg)' }"></div>
+                        <p class="text-2xl absolute font-lexend-black text-shadow-lg text-white top-[50%] left-[50%] transform -translate-x-1/2 -translate-y-1/2">{{ BlueTeamHP }}</p>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
 
     </div>
 
-    <div id="content" class="h-[680px] w-full bg-[#00ffff]">
+    <div id="content" class="h-[720px] w-full relative">
+        <div class="h-[360px] w-[480px] bg-green-400 top-0 left-[240px] absolute"></div>
+        <div class="h-[360px] w-[480px] bg-green-400 top-0 left-[1200px] absolute"></div>
+        <div class="h-[360px] w-[480px] bg-green-400 top-[360px] left-0 absolute"></div>
+        <div class="h-[360px] w-[480px] bg-green-400 top-[360px] left-[480px] absolute"></div>
+        <div class="h-[360px] w-[480px] bg-green-400 top-[360px] left-[960px] absolute"></div>
+        <div class="h-[360px] w-[480px] bg-green-400 top-[360px] left-[1440px] absolute"></div>
 
     </div>
 
-    <div id="footer" class="relative bottom-0 flex h-[200px] w-full bg-[#0000ff]">
+    <div id="footer" class="relative bottom-0 flex h-[204px] w-full px-[20px]">
 
-        <div id="map-info" class="absolute top-0 flex w-[30%] flex-row bg-[#00ff00]">
+        <div id="score-info" class="absolute top-0 w-[70%] left-[50%] transform -translate-x-1/2 flex h-[102px] flex-col">
 
-            <img id="map-bg" class="relative top-0 h-[150px] w-[400px] object-cover object-center" :src="BGUrl"></img>
-            <div id="map-stats" class="flex flex-col justify-center font-ed text-[25px]">
+            <div
+                class="absolute top-0 h-[20px] bg-white"
+                :style="scoreBarStyle(BarWidth)"
+            ></div>
+    
+            <p class="absolute left-[50%] top-[20px] translate-x-[-100%] font-rog pr-3 text-red-200 text-[25px] font-rog text-shadow-lg"
+                :style="scoreSize(BarWidth)"
+                >{{ formatNumber(RedScore) }}</p>
+            <p class="absolute left-[50%] top-[20px] translate-x-[0%] font-rog pl-3 text-blue-200 text-[25px] font-rog text-shadow-lg"
+                :style="scoreSize(-BarWidth)">
+                {{ formatNumber(BlueScore) }}
+            </p>
 
-                <p class="mx-5 my-0">SR: {{ SR }}</p>
-                <p class="mx-5 my-0">AR: {{ AR }}</p>
-                <p class="mx-5 my-0">OD: {{ OD }}</p>
-                <p class="mx-5 my-0">CS: {{ CS }}</p>
+            <p class="absolute left-[50%] top-[67px] translate-x-[-50%] font-rog text-white text-[17px]">
+                <span v-if="BarWidth > 0" class="absolute right-full pr-1">&lt; </span>
+                {{ formatNumber(Math.abs(RedScore - BlueScore)) }}
+                <span v-if="BarWidth < 0" class="absolute left-full pl-1"> &gt;</span>
+            </p>
 
+        </div>
+
+
+        <div id="map-info" class="absolute top-[102px] flex h-[102px] w-[1240px] flex-row bg-gradient-to-r from-white/20 to-transparent">
+
+            <img id="map-bg" class="relative top-0 h-[102px] w-[400px] object-cover object-center" :src="BGUrl"></img>
+
+            
+            <div id="map-identifier" class="absolute top-0 left-0 h-[45px] w-[100px]">
+                
+                <div class="absolute top-0 right-[-18px] h-full w-[80px] bg-black rounded-[7px] origin-bottom-left skew-x-[-20deg]"></div>
+                <div class="relative h-full w-full bg-white rounded-tr-3xl"></div>
+                <div class="absolute top-0 right-[-15px] h-full w-[80px] bg-white rounded-[7px] origin-bottom-left skew-x-[-20deg]"></div>
+                <p class="absolute top-0 left-0 text-gray-500 text-[12px] mx-[7px] font-rog w-[200px]">▶▶ BLUE PICK</p>
+                <p class="absolute top-[11px] left-0 text-black font-rog mx-[7px] text-[22px] w-[200px]">NM4</p>
+
+            </div>
+
+            <div id="map-display" class="flex flex-1 flex-col px-4 text-white">
+                <p class="mt-[3px] text-[14px] font-rog">{{ Artist }}</p>
+                <p class="-mt-[10px] text-[28px] font-rog">{{ Title }}</p>
+                <p class="-my-1 text-[14px] font-lexend-regular text-gray-200">[{{ Difficulty }}] - by {{ Creator }}</p>
+                <div id="map-stats" class="mt-[0px] flex flex-row items-end gap-4 text-white">
+                    <div class="flex items-end gap-2">
+                        <span class="text-[14px] opacity-80">AR</span>
+                        <span class="text-[20px] font-lexend-black -m-[2px]">{{ AR }}</span>
+                    </div>
+                    <div class="flex items-end gap-2">
+                        <span class="text-[14px] opacity-80">CS</span>
+                        <span class="text-[20px] font-lexend-black -m-[2px]">{{ CS }}</span>
+                    </div>
+                    <div class="flex items-end gap-2">
+                        <span class="text-[14px] opacity-80">OD</span>
+                        <span class="text-[20px] font-lexend-black -m-[2px]">{{ OD }}</span>
+                    </div>
+                    <div class="flex items-end gap-2">
+                        <span class="text-[14px] opacity-80">BPM</span>
+                        <span class="text-[20px] font-lexend-black -m-[2px]">{{ BPM }}</span>
+                    </div>
+                    <div class="flex items-end gap-2">
+                        <span class="text-[14px] opacity-80">LEN</span>
+                        <span class="text-[20px] font-lexend-black -m-[2px]">{{ LEN }}</span>
+                    </div>
+                    <div class="flex items-end gap-2">
+                        <span class="text-[14px] opacity-80">SR</span>
+                        <span class="text-[20px] font-lexend-black -m-[2px]">{{ SR }}</span>
+                    </div>
+                </div>
             </div>
 
         </div>
 
-        <div id="score-info" class="absolute top-0 left-1/2 flex w-[20%] -translate-x-1/2 flex-col bg-[#7733ff]">
-
-            <div id="score-bar" class="h-[30px] bg-[#ff00ff]" :style="{ width: BarWidth + 'px' }"></div>
-
-            <div id="score-display" class="flex flex-row items-center justify-center bg-[#ffff00]">
-                <p class="font-eb mr-5 text-red-500 text-[30px]">{{ RedScore }}</p>
-                <p class="font-eb ml-5 text-blue-500 text-[30px]">{{ BlueScore }}</p>
-            </div>
-
+        <div id="chat" class="absolute top-0 right-[20px] h-full w-[677px]">
+              <div id="chat-content" class="pt-[10px] h-full w-full border-[3px] border-[#7ba4af] rounded-[7px] bg-black transition-opacity duration-300" :class="showChat ? 'opacity-100' : 'opacity-0 pointer-events-none'">
+                  <div class="flex h-full flex-col-reverse overflow-hidden text-[16px] p-2 text-white">
+                      <div v-for="(msg, idx) in messages" :key="`${msg.time}-${idx}`" class="flex gap-2">
+                          <span class="text-gray-300 font-lexend-regular">{{ msg.time }}</span>
+                             <span class="font-lexend-black"
+                                 :class="msg.team === 'left' ? 'text-red-400' : msg.team === 'right' ? 'text-blue-400' : 'text-gray-400'">
+                                 {{ msg.name }}
+                             </span>
+                          <span class="font-tpsans-regular break-words overflow-hidden">{{ msg.messageBody }}</span>
+                      </div>
+                  </div>
+              </div>
         </div>
+
+        <div id="advertisment" class="absolute bottom-0 right-[20px] h-full w-[400px] -z-1">
+            <div class="h-full w-full rounded-[7px] bg-black bg-cover bg-center transition-opacity duration-500"
+                :style="{ backgroundImage: currentAdUrl ? `url(${currentAdUrl})` : 'none', opacity: adOpacity }">
+            </div>
+        </div>
+
 
     </div>
 
 </div>
+
+<div id="control-panel" class="absolute left-[1950px] flex gap-3 m-4 text-white">
+    <button class="bg-black size-25" @click="toggleComboMode">Combo Mode: {{ comboMode }}</button>
+    <button class="bg-black size-25" @click="toggleChat">Force Chat: {{ chatMode }}</button>
+</div>
+
 <script src="script.js"></script>
 </body>
 </html>

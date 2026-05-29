@@ -9,10 +9,10 @@
         "red": {
             "team": "red",
             "teamName": "瘋狂 Red Team",
-            "hp": 5300,
+            "hp": 1200,
             "handLimit": 5,
-            "totalAtk": 0,
-            "totalAtkBonus": 0,
+            "totalAtk": 1800,
+            "totalAtkBonus": 300,
             "blessings": [],
             "disasters": [],
             "hand": [
@@ -25,10 +25,10 @@
         "blue": {
             "team": "blue",
             "teamName": "超級 Blue Team",
-            "hp": 6100,
+            "hp": 6000,
             "handLimit": 4,
-            "totalAtk": 0,
-            "totalAtkBonus": 0,
+            "totalAtk": 1200,
+            "totalAtkBonus": 150,
             "blessings": [],
             "disasters": [
                 "緊繃"

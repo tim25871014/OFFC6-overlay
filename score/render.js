@@ -26,3 +26,5 @@ function syncState() {
     localStorage.setItem("game-state", JSON.stringify(state));
     console.log('State synced to localStorage');
 }
+
+setInterval(syncState, 1000);

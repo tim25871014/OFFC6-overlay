@@ -15,6 +15,8 @@ createApp({
             instanceList: [],
             instanceListTimer: null,
             scoreboardTimer: null,
+            pollingWorker: null,
+            useWorkerPolling: false,
             lastEventSeq: 0,
             lastSnapshotSignature: '',
             isBridgeConnected: false,
@@ -43,6 +45,7 @@ createApp({
     mounted() {
         this.loadInstances().catch(() => {});
         this.startInstanceRefresh();
+        this.initPollingWorker();
         if (this.selectedInstanceId) {
             this.pollScoreboard(true).catch(() => {});
             this.startPolling();
@@ -54,6 +57,10 @@ createApp({
         }
         if (this.instanceListTimer) {
             window.clearInterval(this.instanceListTimer);
+        }
+        if (this.pollingWorker) {
+            this.pollingWorker.terminate();
+            this.pollingWorker = null;
         }
     },
     methods: {
@@ -84,6 +91,100 @@ createApp({
         },
         setStatusDot(mode) {
             this.statusDot = mode === 'ok' ? 'ok' : mode === 'err' ? 'err' : 'warn';
+        },
+        initPollingWorker() {
+            if (!window.Worker) {
+                this.useWorkerPolling = false;
+                return;
+            }
+
+            try {
+                this.pollingWorker = new Worker('./bridge-worker.js');
+                this.useWorkerPolling = true;
+            } catch {
+                this.pollingWorker = null;
+                this.useWorkerPolling = false;
+                return;
+            }
+
+            this.pollingWorker.onmessage = event => {
+                this.handleWorkerMessage(event.data);
+            };
+            this.pollingWorker.onerror = error => {
+                this.useWorkerPolling = false;
+                this.pollingWorker?.terminate();
+                this.pollingWorker = null;
+                this.connectionStatus = `背景同步失敗：${error?.message || 'worker error'}`;
+                this.setStatusDot('err');
+            };
+
+            if (this.selectedInstanceId) {
+                this.configureWorkerPolling(this.selectedInstanceId, true);
+            }
+        },
+        configureWorkerPolling(instanceId, reset = false) {
+            if (!this.pollingWorker) {
+                return;
+            }
+            this.pollingWorker.postMessage({
+                type: 'configure',
+                baseUrl: this.bridgeBaseUrl,
+                instanceId: String(instanceId || '').trim(),
+                pollMs: SCOREBOARD_POLL_MS,
+                reset
+            });
+        },
+        requestWorkerPoll(force = false) {
+            if (!this.pollingWorker) {
+                return;
+            }
+            this.pollingWorker.postMessage({ type: 'pollOnce', force });
+        },
+        stopWorkerPolling() {
+            if (!this.pollingWorker) {
+                return;
+            }
+            this.pollingWorker.postMessage({ type: 'stop' });
+        },
+        handleWorkerMessage(payload) {
+            if (!payload || typeof payload !== 'object') {
+                return;
+            }
+
+            if (payload.type === 'snapshot') {
+                this.setGameStatus(payload.snapshot);
+                return;
+            }
+
+            if (payload.type === 'events') {
+                if (Array.isArray(payload.events) && payload.events.length) {
+                    this.setGameEvents(payload.events);
+                }
+                return;
+            }
+
+            if (payload.type === 'connected') {
+                this.isBridgeConnected = true;
+                this.connectionStatus = `已同步：${payload.instanceId}`;
+                this.setStatusDot('ok');
+                return;
+            }
+
+            if (payload.type === 'gone') {
+                this.isBridgeConnected = false;
+                this.selectedInstanceId = '';
+                window.localStorage.removeItem(STORAGE_INSTANCE_KEY);
+                this.connectionStatus = '目標對局已離線，已停止同步並自動刷新清單。';
+                this.setStatusDot('warn');
+                this.loadInstances().catch(() => {});
+                return;
+            }
+
+            if (payload.type === 'error') {
+                this.isBridgeConnected = false;
+                this.connectionStatus = `同步失敗：${payload.message}`;
+                this.setStatusDot('err');
+            }
         },
         updateStatusText() {
             this.snapshotStatus = this.gameStatus?.updatedAt
@@ -156,6 +257,9 @@ createApp({
                         this.selectedInstanceId = '';
                         window.localStorage.removeItem(STORAGE_INSTANCE_KEY);
                         this.isBridgeConnected = false;
+                        if (this.useWorkerPolling) {
+                            this.stopWorkerPolling();
+                        }
                     }
                 }
 
@@ -168,6 +272,9 @@ createApp({
                         ? '請從選單選擇要同步的 index.html。'
                         : '尚未偵測到任何 index.html。';
                     this.isBridgeConnected = false;
+                    if (this.useWorkerPolling) {
+                        this.stopWorkerPolling();
+                    }
                 }
 
                 this.setStatusDot('warn');
@@ -185,11 +292,19 @@ createApp({
             this.isBridgeConnected = false;
             this.updateEventText();
             this.updateStatusText();
+            if (this.useWorkerPolling) {
+                this.configureWorkerPolling(this.selectedInstanceId, true);
+            }
             await this.pollScoreboard(true);
             this.startPolling();
         },
         async pollScoreboard(force = false) {
             if (!this.selectedInstanceId) {
+                return;
+            }
+
+            if (this.useWorkerPolling) {
+                this.requestWorkerPoll(force);
                 return;
             }
 
@@ -225,12 +340,23 @@ createApp({
             }
         },
         startPolling() {
+            if (this.useWorkerPolling) {
+                this.stopTimer();
+                this.configureWorkerPolling(this.selectedInstanceId, false);
+                return;
+            }
             if (this.scoreboardTimer) {
                 window.clearInterval(this.scoreboardTimer);
             }
             this.scoreboardTimer = window.setInterval(() => {
                 this.pollScoreboard().catch(() => {});
             }, SCOREBOARD_POLL_MS);
+        },
+        stopTimer() {
+            if (this.scoreboardTimer) {
+                window.clearInterval(this.scoreboardTimer);
+                this.scoreboardTimer = null;
+            }
         },
         startInstanceRefresh() {
             if (this.instanceListTimer) {
