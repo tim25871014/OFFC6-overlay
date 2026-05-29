@@ -39,6 +39,14 @@ const scoreInfo = createApp({ setup() {
         } else return { left: '50%', width: `${width}px`, borderBottomRightRadius: '20px'};
     };
 
+    const scoreBorderStyle = (value) => {
+        console.log("BorderWidth:", value);
+        const width = Math.abs(value);
+        if (value >= 0) { 
+            return { borderLeft: `${width}px solid #E57373` };
+        } else return { borderRight: `${width}px solid #64B5F6` };
+    };
+
     const scoreSize = (value) => {
         if (value >= 0) { return { fontSize: '38px', transform: 'translateY(-4px)' };
         } else return { fontSize: '25px', transform: 'translateY(2px)' }; 
@@ -48,9 +56,11 @@ const scoreInfo = createApp({ setup() {
         RedScore: ref(0),
         BlueScore: ref(0),
         BarWidth: ref(0),
+        BorderWidth: ref(0),
         formatNumber,
         scoreBarStyle,
-        scoreSize
+        scoreSize,
+        scoreBorderStyle
     }
 }}).mount('#score-info');
 
@@ -73,6 +83,7 @@ const teamInfo = createApp({ setup() {
         MaxHP: ref(0),
         RedTeamATK: ref(0),
         BlueTeamATK: ref(0),
+        showAtk: ref(false),
         hpColor
     }
 }}).mount('#team-info');
@@ -233,9 +244,14 @@ function updateScoreData(tourneyMng) {
         blueTeamScore = blueTeam.reduce((sum, client) => sum + client.play.combo.max, 0);
     }
 
+    // 計算雙方的 clients[i].play.accuracy * clients[i].play.combo.current 總和
+    let redTeamComboScore = redTeam.reduce((sum, client) => sum + (client.play.accuracy * client.play.combo.current), 0);
+    let blueTeamComboScore = blueTeam.reduce((sum, client) => sum + (client.play.accuracy * client.play.combo.current), 0);
+
     scoreInfo.RedScore = redTeamScore;
     scoreInfo.BlueScore = blueTeamScore;
     scoreInfo.BarWidth = mapTanh(redTeamScore - blueTeamScore);
+    scoreInfo.BorderWidth = (!controlPanel.comboMode) ? 3 * mapTanh(redTeamComboScore - blueTeamComboScore) : 0;
 }
 
 function mapTanh(x) {
@@ -253,6 +269,7 @@ function mapTanh(x) {
 function updateTeamInfo(tourneyMng) {
     teamInfo.RedTeamName = tourneyMng?.team?.left || "Red Team";
     teamInfo.BlueTeamName = tourneyMng?.team?.right || "Blue Team";
+    teamInfo.showAtk = tourneyMng?.scoreVisible === true;
     // 要去 teams.json 找對應隊伍的 avatar，沒有就用空字串
     let redTeamData = teams.find(team => team.teamName === teamInfo.RedTeamName);
     let blueTeamData = teams.find(team => team.teamName === teamInfo.BlueTeamName);

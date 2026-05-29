@@ -28,7 +28,7 @@
                     <div id="red-avatar" class="w-[140px] h-[105px] border-[3.5px] border-red-950 bg-red-950 rounded-[10px] rounded-tr-none bg-cover bg-center"
                         :style="{ backgroundImage: `url(${RedTeamAvatar})` }">
                     </div>
-                    <p class="absolute w-[140px] top-[100px] left-0 font-lexend-black text-white text-[22px] text-center">ATK: {{ RedTeamATK }}</p>
+                    <p class="absolute w-[140px] top-[100px] left-0 font-lexend-black text-white text-[22px] text-center" v-show="showAtk">ATK: {{ RedTeamATK }}</p>
                 </div>
                 <div class="flex flex-col gap-1">
                     <p class="px-4 text-[32px] h-[48px] w-[440px] font-rog bg-gradient-to-r from-red-950 to-transparent">{{ RedTeamName }}</p>
@@ -53,7 +53,7 @@
                     <div id="blue-avatar" class="w-[140px] h-[105px] border-[3.5px] border-blue-950 bg-blue-950 rounded-[10px] rounded-tl-none bg-cover bg-center"
                         :style="{ backgroundImage: `url(${BlueTeamAvatar})` }">
                     </div>
-                    <p class="absolute w-[140px] top-[100px] left-0 font-lexend-black text-white text-[22px] text-center">ATK: {{ BlueTeamATK }}</p>
+                    <p class="absolute w-[140px] top-[100px] left-0 font-lexend-black text-white text-[22px] text-center" v-show="showAtk">ATK: {{ BlueTeamATK }}</p>
                 </div>
                 <div class="flex flex-col gap-1 items-end">
                     <p class="px-4 text-[32px] h-[48px] w-[440px] font-rog bg-gradient-to-l from-blue-950 to-transparent">{{ BlueTeamName }}</p>
@@ -94,7 +94,7 @@
 
             <div
                 class="absolute top-0 h-[20px] bg-white"
-                :style="scoreBarStyle(BarWidth)"
+                :style="[scoreBarStyle(BarWidth), scoreBorderStyle(BorderWidth)]"
             ></div>
     
             <p class="absolute left-[50%] top-[20px] translate-x-[-100%] font-rog pr-3 text-red-200 text-[25px] font-rog text-shadow-lg"
