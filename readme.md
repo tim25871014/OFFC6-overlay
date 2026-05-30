@@ -2,7 +2,10 @@
 
 with Vue / tailwind CSS
 
+[Vue](https://vuejs.org/)
+
+[Tailwind CSS](https://tailwindcss.com/)
+
+
 ### do to 
-分數條顏色
 countup.js
-選圖/圖池抓取

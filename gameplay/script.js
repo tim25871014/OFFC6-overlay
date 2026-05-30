@@ -46,11 +46,27 @@ const scoreInfo = createApp({ setup() {
         return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
 
-    const scoreBarStyle = (value) => {
-        const width = Math.abs(value);
-        if (value >= 0) { 
-            return { left: '50%', transform: 'translateX(-100%)', width: `${width}px`, borderBottomLeftRadius: '20px' };
-        } else return { left: '50%', width: `${width}px`, borderBottomRightRadius: '20px'};
+    const scoreBarStyle = (barWidth, borderWidth = 0) => {
+        const totalWidth = barWidth + borderWidth;
+        const width = Math.abs(totalWidth);
+        const sameDirection = Math.sign(barWidth) === Math.sign(borderWidth) || borderWidth === 0;
+        const offset = sameDirection ? 0 : -borderWidth;
+
+        if (totalWidth >= 0) {
+            return {
+                left: '50%',
+                transform: `translateX(-100%) translateX(${offset}px)` ,
+                width: `${width}px`,
+                borderBottomLeftRadius: '5px'
+            };
+        }
+
+        return {
+            left: '50%',
+            transform: `translateX(${offset}px)` ,
+            width: `${width}px`,
+            borderBottomRightRadius: '5px'
+        };
     };
 
     const scoreBorderStyle = (value) => {
@@ -211,11 +227,11 @@ function updateChat(tourneyMng) {
     const nextMessages = Array.isArray(tourneyMng?.chat) ? tourneyMng.chat : [];
     chatInfo.messages = nextMessages
         .filter(item => item?.name !== 'BanchoBot')
-        .filter(item => !(item?.messageBody || '').startsWith('Match history'))
+        .filter(item => !(item?.message || '').startsWith('Match history'))
         .map(item => ({
-            time: item?.time || '',
+            timestamp: item?.timestamp || '',
             name: item?.name || '',
-            messageBody: item?.messageBody || '',
+            message: item?.message || '',
             team: item?.team || ''
         }))
         .reverse();
@@ -283,14 +299,43 @@ function updateScoreData(tourneyMng) {
 
     scoreInfo.RedScore = redTeamScore;
     scoreInfo.BlueScore = blueTeamScore;
-    scoreInfo.BarWidth = mapTanh(redTeamScore - blueTeamScore);
-    scoreInfo.BorderWidth = (!controlPanel.comboMode) ?
-        3 * mapTanh(redTeamComboScore - blueTeamComboScore) :
-        5 * Math.sign(mapTanh(redTeamScore - blueTeamScore))
-    ;
+    const barWidth = mapScoreWidth(redTeamScore - blueTeamScore);
+    scoreInfo.BarWidth = barWidth;
+    scoreInfo.BorderWidth = 2 * getBarWidthDelta(barWidth);
 }
 
-function mapTanh(x) {
+const barWidthHistory = [];
+let lastBarWidth = 0;
+let lastBarWidthChangeAt = Date.now();
+function getBarWidthDelta(currentWidth) {
+    const now = Date.now();
+    barWidthHistory.push({ t: now, value: currentWidth });
+
+    const epsilon = 0.1;
+    if (Math.abs(currentWidth - lastBarWidth) > epsilon) {
+        lastBarWidth = currentWidth;
+        lastBarWidthChangeAt = now;
+    }
+
+    if (now - lastBarWidthChangeAt > 2000) return 0;
+
+    const cutoff = now - 1000;
+    while (barWidthHistory.length && barWidthHistory[0].t < now - 1000) {
+        barWidthHistory.shift();
+    }
+
+    let pastValue = barWidthHistory[0]?.value ?? currentWidth;
+    for (let i = barWidthHistory.length - 1; i >= 0; i--) {
+        if (barWidthHistory[i].t <= cutoff) {
+            pastValue = barWidthHistory[i].value;
+            break;
+        }
+    }
+
+    return currentWidth - pastValue;
+}
+
+function mapScoreWidth(x) {
     let width;
     if (!controlPanel.comboMode) {
         width = 480 * Math.tanh(x / 300000);
@@ -302,6 +347,18 @@ function mapTanh(x) {
     else return width;
 }
 
+function mapForceWidth(x) {
+    let width;
+    if (!controlPanel.comboMode) {
+        width = 200 * Math.tanh(x / 300000);
+    } else {
+        width = 5 * Math.sign(x);
+    }
+    if (width > 15) return 15;
+    else if (width < -15) return -15;
+    else return width;
+}
+
 function updateTeamInfo(tourneyMng) {
     teamInfo.RedTeamName = tourneyMng?.team?.left || "Red Team";
     teamInfo.BlueTeamName = tourneyMng?.team?.right || "Blue Team";
@@ -309,8 +366,8 @@ function updateTeamInfo(tourneyMng) {
     // 要去 teams.json 找對應隊伍的 avatar，沒有就用空字串
     let redTeamData = teams.find(team => team.teamName === teamInfo.RedTeamName);
     let blueTeamData = teams.find(team => team.teamName === teamInfo.BlueTeamName);
-    teamInfo.RedTeamAvatar = "../_data/avatar/" + (redTeamData ? redTeamData.avatar : "");
-    teamInfo.BlueTeamAvatar = "../_data/avatar/" + (blueTeamData ? blueTeamData.avatar : "");
+    teamInfo.RedTeamAvatar = "../_data/img/avatar/" + (redTeamData ? redTeamData.avatar : "");
+    teamInfo.BlueTeamAvatar = "../_data/img/avatar/" + (blueTeamData ? blueTeamData.avatar : "");
 }
 
 /////////////////////////////////////////////////////////////
