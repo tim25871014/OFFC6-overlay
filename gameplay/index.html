@@ -79,12 +79,12 @@
     </div>
 
     <div id="content" class="h-[720px] w-full relative">
-        <div class="h-[360px] w-[480px] bg-green-400 top-0 left-[240px] absolute"></div>
-        <div class="h-[360px] w-[480px] bg-green-400 top-0 left-[1200px] absolute"></div>
-        <div class="h-[360px] w-[480px] bg-green-400 top-[360px] left-0 absolute"></div>
-        <div class="h-[360px] w-[480px] bg-green-400 top-[360px] left-[480px] absolute"></div>
-        <div class="h-[360px] w-[480px] bg-green-400 top-[360px] left-[960px] absolute"></div>
-        <div class="h-[360px] w-[480px] bg-green-400 top-[360px] left-[1440px] absolute"></div>
+        <div class="h-[360px] w-[480px] bg-purple-400 top-0 left-[240px] absolute"></div>
+        <div class="h-[360px] w-[480px] bg-purple-400 top-0 left-[1200px] absolute"></div>
+        <div class="h-[360px] w-[480px] bg-purple-400 top-[360px] left-0 absolute"></div>
+        <div class="h-[360px] w-[480px] bg-purple-400 top-[360px] left-[480px] absolute"></div>
+        <div class="h-[360px] w-[480px] bg-purple-400 top-[360px] left-[960px] absolute"></div>
+        <div class="h-[360px] w-[480px] bg-purple-400 top-[360px] left-[1440px] absolute"></div>
 
     </div>
 
@@ -159,7 +159,7 @@
         </div>
 
         <div id="advertisment" class="absolute bottom-0 right-[20px] h-full w-[400px] -z-1">
-            <div class="h-full w-full rounded-[7px] bg-black bg-cover bg-center transition-opacity duration-500"
+            <div v-show="showAd" class="h-full w-full rounded-[7px] bg-black bg-cover bg-center transition-opacity duration-500"
                 :style="{ backgroundImage: currentAdUrl ? `url(${currentAdUrl})` : 'none', opacity: adOpacity }">
             </div>
         </div>
