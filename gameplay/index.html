@@ -124,8 +124,8 @@
                 <div class="absolute top-0 right-[-18px] h-full w-[80px] bg-black rounded-[7px] origin-bottom-left skew-x-[-20deg]"></div>
                 <div class="relative h-full w-full bg-white rounded-tr-3xl"></div>
                 <div class="absolute top-0 right-[-15px] h-full w-[80px] bg-white rounded-[7px] origin-bottom-left skew-x-[-20deg]"></div>
-                <p class="absolute top-0 left-0 text-gray-500 text-[12px] mx-[7px] font-rog w-[200px]">▶▶ BLUE PICK</p>
-                <p class="absolute top-[11px] left-0 text-black font-rog mx-[7px] text-[22px] w-[200px]">NM4</p>
+                <p class="absolute top-0 left-0 text-gray-500 text-[12px] mx-[7px] font-rog w-[200px]">▶▶ playing</p>
+                <p class="absolute top-[11px] left-0 text-black font-rog mx-[7px] text-[22px] w-[200px]">{{ MapIdentifier }}</p>
 
             </div>
 
@@ -134,29 +134,9 @@
                 <p class="-mt-[10px] text-[28px] font-rog">{{ Title }}</p>
                 <p class="-my-1 text-[14px] font-lexend-regular text-gray-200">[{{ Difficulty }}] - by {{ Creator }}</p>
                 <div id="map-stats" class="mt-[0px] flex flex-row items-end gap-4 text-white">
-                    <div class="flex items-end gap-2">
-                        <span class="text-[14px] opacity-80">AR</span>
-                        <span class="text-[20px] font-lexend-black -m-[2px]">{{ AR }}</span>
-                    </div>
-                    <div class="flex items-end gap-2">
-                        <span class="text-[14px] opacity-80">CS</span>
-                        <span class="text-[20px] font-lexend-black -m-[2px]">{{ CS }}</span>
-                    </div>
-                    <div class="flex items-end gap-2">
-                        <span class="text-[14px] opacity-80">OD</span>
-                        <span class="text-[20px] font-lexend-black -m-[2px]">{{ OD }}</span>
-                    </div>
-                    <div class="flex items-end gap-2">
-                        <span class="text-[14px] opacity-80">BPM</span>
-                        <span class="text-[20px] font-lexend-black -m-[2px]">{{ BPM }}</span>
-                    </div>
-                    <div class="flex items-end gap-2">
-                        <span class="text-[14px] opacity-80">LEN</span>
-                        <span class="text-[20px] font-lexend-black -m-[2px]">{{ LEN }}</span>
-                    </div>
-                    <div class="flex items-end gap-2">
-                        <span class="text-[14px] opacity-80">SR</span>
-                        <span class="text-[20px] font-lexend-black -m-[2px]">{{ SR }}</span>
+                    <div v-for="stat in mapStats" :key="stat.label" class="flex items-end gap-2">
+                        <span class="text-[14px] opacity-80">{{ stat.label }}</span>
+                        <span class="text-[20px] font-lexend-black -m-[2px]">{{ stat.value }}</span>
                     </div>
                 </div>
             </div>

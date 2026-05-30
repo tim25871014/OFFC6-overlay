@@ -1,22 +1,36 @@
 const ws = ConnectSocket();
 
-const { createApp, ref } = Vue;
+const { createApp, ref, computed } = Vue;
 
 const mapInfo = createApp({ setup() {
+    const AR = ref(0);
+    const CS = ref(0);
+    const OD = ref(0);
+    const SR = ref(0);
+    const BPM = ref(0);
+    const LEN = ref(0);
+    const Title = ref("");
+    const Artist = ref("");
+    const Creator = ref("");
+    const Difficulty = ref("");
+    const mapId = ref(0);
+    const setId = ref(0);
+    const BGUrl = ref("");
+    const MapIdentifier = ref("");
+
+    const mapStats = computed(() => ([
+        { label: 'AR', value: AR.value },
+        { label: 'CS', value: CS.value },
+        { label: 'OD', value: OD.value },
+        { label: 'BPM', value: BPM.value },
+        { label: 'LEN', value: LEN.value },
+        { label: 'SR', value: SR.value }
+    ]));
+
     return {
-        AR: ref(0),
-        CS: ref(0),
-        OD: ref(0),
-        SR: ref(0),
-        BPM: ref(0),
-        LEN: ref(0),
-        Title: ref(""),
-        Artist: ref(""),
-        Creator: ref(""),
-        Difficulty: ref(""),
-        mapId: ref(0),
-        setId: ref(0),
-        BGUrl: ref("")
+        AR, CS, OD, SR, BPM, LEN, 
+        Title, Artist, Creator, Difficulty, mapId, setId, BGUrl, MapIdentifier,
+        mapStats
     }
 }}).mount('#map-info');
 
@@ -40,7 +54,6 @@ const scoreInfo = createApp({ setup() {
     };
 
     const scoreBorderStyle = (value) => {
-        console.log("BorderWidth:", value);
         const width = Math.abs(value);
         if (value >= 0) { 
             return { borderLeft: `${width}px solid #E57373` };
@@ -159,9 +172,9 @@ const adInfo = createApp({ setup() {
 /////////////////////////////////////////////////////////////
 
 // main function
-let mappool = {}, teams = [];
+let mappools = {}, pool = {}, teams = [];
 (async () => {
-    mappool = await fetch('../_data/config/beatmaps.json').then(res => res.json());
+    mappools = await fetch('../_data/config/mappools.json').then(res => res.json());
     teams = await fetch('../_data/config/teams.json').then(res => res.json());
     updateStageInfo();
 })();
@@ -195,7 +208,9 @@ function updateChat(tourneyMng) {
 }
 
 function updateStageInfo() {
-    let stage = mappool?.stage || "Unknown Stage";
+    const stage = mappools?.current_stage || "Unknown Stage";
+    // 從 mappools.mappools 找到 stage = current_stage 的物件
+    pool = mappools?.mappools?.find(p => p.stage === stage);
     StageInfo.Stage = stage;
 }
 
@@ -211,6 +226,9 @@ function updateMapData(beatmapMng) {
     mapInfo.Artist = beatmapMng.artist;
     mapInfo.Creator = beatmapMng.mapper;
     mapInfo.Difficulty = beatmapMng.version;
+
+    const beatmap = pool?.beatmaps?.find(b => b.beatmap_id === beatmapMng.id);
+    mapInfo.MapIdentifier = beatmap ? beatmap.identifier : "EX";
 
     if (beatmapMng.id != mapInfo.mapId) { // map has changed
         mapInfo.mapId = beatmapMng.id;
