@@ -111,24 +111,66 @@
                 <div class="inset-[5px] absolute top-2 bottom-2 left-0 right-0 rounded-[20px] border-[3px] border-[#7ba4af]">
                     <p class="font-rog text-[22px] text-center">▲ cards ▲</p>
                     <div id="card-play" class="flex h-[calc(100%-47px)] flex-col-reverse overflow-hidden text-[16px] text-white gap-[5px]">
-                        <div v-for="(card, idx) in Cards" :key="`card-${idx}`" class="flex flex-none gap-2 h-[72px] overflow-hidden bg-green-500/50 rounded-[5px]"
+                        <div v-for="(card, idx) in Cards" :key="`card-${idx}`" class="flex flex-none gap-2 h-[72px] overflow-hidden"
                         :class="card.team == 'red' ? 'flex-row' : 'flex-row-reverse'"
                         >
                             
-                            <div id="card-avatar" class="h-full w-[66px] bg-teal-300"></div>
-                            <div id="card-info" :class="['group rounded-[10px] max-w-[407px] flex flex-row gap-2 items-center', card.type === 'M' ? 'bg-[#21303d] border-[#cfe2f3] border-[1px]' : card.type === 'T' ? 'bg-[#3f252d] border-[#ffdde7] border-[1px]' : 'bg-indigo-600']">
-                                <div id="card-image" class="ml-[10px] mr-[3px] h-[60px] w-[80px] flex-none rounded-[15px] bg-lime-400"></div>
-                                
-                                <div id="card-description" class="mr-[20px]">
-                                <div class="flex flex-col group-hover:flex-row group-hover:items-baseline group-hover:gap-3">
-                                    <span class="text-gray-100 text-[20px] leading-tight break-words font-rog">{{ card.id }}</span>
-                                    <span class="font-tpsans-bold text-[16px] tansfrom group-hover:translate-y-[-1px]">{{ card.name }}</span>
-                                </div>
-
-                                <div class="hidden group-hover:block h-[35px] text-[13px] leading-tight font-tpsans-light">{{ card.description }}</div>
-                                </div>
-
+                            <div id="card-avatar" class="h-full w-[66px] flex" :class="card.team === 'red' ? 'items-end justify-end' : 'items-end justify-start' ">
+                                <img v-if="card.avatarUrl !== 'none'" :src="card.avatarUrl" class="h-[50px] w-[50px] rounded-full"></img>
                             </div>
+
+                            <div id="card-info" 
+                                :class="[
+                                    'group rounded-[10px] w-fit max-w-[407px] flex items-center overflow-hidden transition-all duration-300 ease-out', 
+                                    card.type === 'M' ? 'bg-[#21303d] border-[#cfe2f3] border-[1px]' : 
+                                    card.type === 'T' ? 'bg-[#3f252d] border-[#ffdde7] border-[1px]' : 'bg-indigo-600',
+                                    card.team === 'red' ? 'flex-row' : 'flex-row-reverse'
+                                ]">
+                                
+                                <img id="card-image" :src="card.imageUrl" class="mx-[10px] h-[60px] w-[80px] flex-none rounded-[15px] bg-lime-400"></img>
+                                
+                                <div id="card-description" :class="['py-2 flex flex-col justify-center', card.team === 'red' ? 'mr-[20px]' : 'ml-[20px]']">
+                                    
+                                    <div class="flex items-baseline">
+                                        <span class="text-gray-100 text-[20px] leading-tight break-words font-rog">{{ card.id }}</span>
+
+                                        <div class="grid transition-all duration-300 ease-out"
+                                            :class="card.isAutoHovered ? 'grid-cols-[1fr] opacity-100' : 'grid-cols-[0fr] opacity-0 group-hover:grid-cols-[1fr] group-hover:opacity-100'">
+                                            <div class="overflow-hidden">
+                                                <span class="w-max block font-tpsans-bold text-[16px] pl-3 transform translate-y-[-1px]">
+                                                    {{ card.name }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex flex-col">
+                                        
+                                        <div class="grid transition-all duration-300 ease-out"
+                                            :class="card.isAutoHovered ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100 group-hover:grid-rows-[0fr] group-hover:opacity-0'">
+                                            <div class="overflow-hidden">
+                                                <span class="font-tpsans-bold text-[16px] whitespace-nowrap block mt-[2px]">
+                                                    {{ card.name }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="grid transition-all duration-300 ease-out"
+                                            :class="card.isAutoHovered 
+                                                    ? 'grid-rows-[1fr] grid-cols-[1fr] opacity-100' 
+                                                    : 'grid-rows-[0fr] grid-cols-[0fr] opacity-0 group-hover:grid-rows-[1fr] group-hover:grid-cols-[1fr] group-hover:opacity-100'">
+                                            <div class="overflow-hidden">
+                                                <div class="w-max max-w-[260px] text-[13px] leading-tight font-tpsans-light whitespace-normal line-clamp-2 min-h-[30px]">
+                                                    {{ card.description }}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                    
+                                </div>
+                            </div>
+
 
                         </div>
                     </div>

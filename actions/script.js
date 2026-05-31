@@ -230,6 +230,7 @@ function generatePickSlots(tourneyMng) {
     picksInfo.pickCount = Math.floor(bo / 2);
 }
 
+let storedRedAvatar = '', storedBlueAvatar = '';
 function updateTeamInfo(tourneyMng) {
     teamInfo.RedTeamName = tourneyMng?.team?.left || "Red Team";
     teamInfo.BlueTeamName = tourneyMng?.team?.right || "Blue Team";
@@ -237,8 +238,14 @@ function updateTeamInfo(tourneyMng) {
     // 要去 teams.json 找對應隊伍的 avatar，沒有就用空字串
     let redTeamData = teams.find(team => team.teamName === teamInfo.RedTeamName);
     let blueTeamData = teams.find(team => team.teamName === teamInfo.BlueTeamName);
-    teamInfo.RedTeamAvatar = "../_data/img/avatar/" + (redTeamData ? redTeamData.avatar : "");
-    teamInfo.BlueTeamAvatar = "../_data/img/avatar/" + (blueTeamData ? blueTeamData.avatar : "");
+
+    if (redTeamData.avatar !== storedRedAvatar || blueTeamData.avatar !== storedBlueAvatar) {
+        teamInfo.RedTeamAvatar = "../_data/img/avatar/" + redTeamData.avatar;
+        teamInfo.BlueTeamAvatar = "../_data/img/avatar/" + blueTeamData.avatar;
+        storedRedAvatar = redTeamData.avatar;
+        storedBlueAvatar = blueTeamData.avatar;
+        updateCardInfo(); // 更新卡片列表裡的 avatar
+    }
 }
 
 function updateChat(tourneyMng) {
@@ -306,16 +313,40 @@ function updateBDInfo() {
 }
 
 function updateCardInfo() {
-    // gameEvent 這個陣列裡會有一些卡片相關的事件，如果 type = "play" 的話，就塞進 cardInfo.Cards
     const nextEvents = Array.isArray(gameEvent) ? gameEvent : [];
-    cardInfo.Cards = nextEvents
-        .filter(item => item?.type == 'play')
-        .map(item => ({
-            team: item?.team || '',
-            id: item?.card || '',
-            name: item?.cardName || '',
-            type: item?.cardType || '',
-            description: (item.cardType == 'M') ? (item?.effect) : (item?.trigger + '，' + item?.effect) || '',
-        }))
-        .reverse();
+    
+    const playEvents = nextEvents.filter(item => item?.type == 'play');
+    
+    const currentCount = cardInfo.Cards.length;
+    if (playEvents.length < currentCount) cardInfo.Cards = [];
+    if (playEvents.length === currentCount) return;
+
+    const newEvents = playEvents.slice(currentCount);
+    const newCards = newEvents.map(item => ({
+        team: item?.team || '',
+        id: item?.card || '',
+        name: item?.cardName || '',
+        type: item?.cardType || '',
+        description: (item.cardType == 'M') ? (item?.effect) : (item?.trigger + '，' + item?.effect) || '',
+        isAutoHovered: true, // 新卡片預設為展開狀態
+        imageUrl: `../_data/img/cards/${item?.card}.png`,
+        avatarUrl: (item.team === 'red' ? teamInfo.RedTeamAvatar : teamInfo.BlueTeamAvatar)
+    }));
+    newCards.reverse();
+
+    cardInfo.Cards.unshift(...newCards);
+
+    const addedCount = newCards.length;
+    for (let i = 0; i < addedCount; i++) {
+        const reactiveCard = cardInfo.Cards[i];
+        setTimeout(() => { reactiveCard.isAutoHovered = false;}, 10000); // 過幾秒後自動收起
+    }
+
+    // 檢測有沒有卡片的 avatar 與前一張卡片不同，如果不同就顯示 avatar，否則不顯示
+    for (let idx = 0; idx < cardInfo.Cards.length; idx++) {
+        const card = cardInfo.Cards[idx];
+        if (idx === 0) continue;
+        const prevCard = cardInfo.Cards[idx - 1];
+        if (card.team === prevCard.team) card.avatarUrl = 'none';
+    }
 }

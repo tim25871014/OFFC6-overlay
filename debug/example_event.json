@@ -167,6 +167,21 @@
     {
         "seq": 12,
         "type": "play",
+        "team": "red",
+        "card": "M17",
+        "cardName": "勝利之舞",
+        "cardType": "M",
+        "damage": 0,
+        "trigger": "隨時可主動發動",
+        "effect": "本回合己方攻擊力增加300。",
+        "winnerTeam": "",
+        "loserTeam": "",
+        "createdAt": "2026-05-23T14:02:40.123Z",
+        "data": null
+    },
+    {
+        "seq": 13,
+        "type": "play",
         "team": "blue",
         "card": "M17",
         "cardName": "勝利之舞",
