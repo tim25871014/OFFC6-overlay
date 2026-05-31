@@ -74,8 +74,47 @@ const chatInfo = createApp({ setup() {
 }}).mount('#chat');
 
 const cardInfo = createApp({ setup() {
+
+    const isBanSectionVisible = (stadium) => {
+    if (stadium.banOrder === 0) return true;
+    
+        const targetBans = stadium.banOrder === 1 
+            ? stadium.firstBans 
+            : stadium.secondBans;
+
+        return (targetBans[0] + targetBans[1]) === '';
+    };
+
+    const thisSlotBanInfo = (stadium, num) => {
+        return stadium.banOrder === 1 ? stadium.firstBans[num] : stadium.secondBans[num];
+    };
+
+    const thisSlotBanDetail = (stadium, num) => {
+        const identifier = thisSlotBanInfo(stadium, num);
+        const beatmap = Array.isArray(pool?.beatmaps) ? pool.beatmaps.find(b => b.identifier === identifier) : null;
+        if (!identifier || !beatmap) {
+            return {
+                identifier: '',
+                bgUrl: ''
+            };
+        }
+        return ({
+            identifier: identifier,
+            bgUrl: beatmap?.beatmapset_id
+                ? `https://assets.ppy.sh/beatmaps/${beatmap.beatmapset_id}/covers/cover.jpg`
+                : ''
+        });
+    }
+
+
     return {
-        Cards: ref([])
+        Cards: ref([]),
+        RedStadiums: ref([]),
+        BlueStadiums: ref([]),
+        isTwoStadiums: ref(false),
+        isBanSectionVisible,
+        thisSlotBanInfo,
+        thisSlotBanDetail
     }
 }}).mount('#cards');
 
@@ -132,6 +171,7 @@ const controlPanel = createApp({ setup() {
             if (isBan) picksInfo.blueBans = [...picksInfo.blueBans, identifier];
             else picksInfo.bluePicks = [...picksInfo.bluePicks, identifier];
         }
+        updateStadiumInfo();
     };
 
     return {
@@ -228,9 +268,9 @@ ws.onmessage = (event) => {
 function generatePickSlots(tourneyMng) {
     const bo = tourneyMng?.bestOF || 9;
     picksInfo.pickCount = Math.floor(bo / 2);
+    cardInfo.isTwoStadiums = (tourneyMng?.bestOF >= 13);
 }
 
-let storedRedAvatar = '', storedBlueAvatar = '';
 function updateTeamInfo(tourneyMng) {
     teamInfo.RedTeamName = tourneyMng?.team?.left || "Red Team";
     teamInfo.BlueTeamName = tourneyMng?.team?.right || "Blue Team";
@@ -239,13 +279,8 @@ function updateTeamInfo(tourneyMng) {
     let redTeamData = teams.find(team => team.teamName === teamInfo.RedTeamName);
     let blueTeamData = teams.find(team => team.teamName === teamInfo.BlueTeamName);
 
-    if (redTeamData.avatar !== storedRedAvatar || blueTeamData.avatar !== storedBlueAvatar) {
-        teamInfo.RedTeamAvatar = "../_data/img/avatar/" + redTeamData.avatar;
-        teamInfo.BlueTeamAvatar = "../_data/img/avatar/" + blueTeamData.avatar;
-        storedRedAvatar = redTeamData.avatar;
-        storedBlueAvatar = blueTeamData.avatar;
-        updateCardInfo(); // 更新卡片列表裡的 avatar
-    }
+    teamInfo.RedTeamAvatar = "../_data/img/avatar/" + redTeamData.avatar;
+    teamInfo.BlueTeamAvatar = "../_data/img/avatar/" + blueTeamData.avatar;
 }
 
 function updateChat(tourneyMng) {
@@ -273,7 +308,8 @@ setInterval(() => {
     loadGameState(localStorage.getItem('game-state'));
     updateRefInfo();
     updateBDInfo();
-    updateCardInfo();
+    setTimeout(() => { updateCardInfo(); }, 100);
+    setTimeout(() => { updateStadiumInfo(); }, 100);
 }, 1000);
 
 function loadGameState(value) {
@@ -312,6 +348,40 @@ function updateBDInfo() {
     bdInfo.blueBD = toCardUrls(blueTeam);
 }
 
+function updateStadiumInfo() {
+    const nextEvents = Array.isArray(gameEvent) ? gameEvent : [];
+
+    const stadiumEvents = nextEvents.filter(item => item?.type === 'stadium');
+
+    // 看 stadiumEvents 事件裡 item.card = "S1" 和 "S2" 哪個先出現
+    let firstBan = 'S2';
+    for (const item of stadiumEvents) {
+        if (item?.card === 'S2') break;
+        firstBan = 'S1';
+    }
+
+    const redStadiums = stadiumEvents.filter(item => item?.team === 'red').map(item => ({
+        id: item?.card || '',
+        name: item?.cardName || '',
+        description: item?.effect || '',
+        imageUrl: `../_data/img/cards/${item?.card || ''}.png`,
+        banOrder: (item?.card === "S1" || item?.card === "S2") ? (item?.card === firstBan ? 1 : 2) : 0,
+        firstBans: [(picksInfo.redBans[0] || ''), (picksInfo.blueBans[0] || '')],
+        secondBans: [(picksInfo.redBans[1] || ''), (picksInfo.blueBans[1] || '')]
+    }));
+    const blueStadiums = stadiumEvents.filter(item => item?.team === 'blue').map(item => ({
+        id: item?.card || '',
+        name: item?.cardName || '',
+        description: item?.effect || '',
+        imageUrl: `../_data/img/cards/${item?.card || ''}.png`,
+        banOrder: (item?.card === "S1" || item?.card === "S2") ? (item?.card === firstBan ? 1 : 2) : 0,
+        firstBans: [(picksInfo.redBans[0] || ''), (picksInfo.blueBans[0] || '')],
+        secondBans: [(picksInfo.redBans[1] || ''), (picksInfo.blueBans[1] || '')]
+    }));
+    cardInfo.RedStadiums = redStadiums;
+    cardInfo.BlueStadiums = blueStadiums;
+}
+
 function updateCardInfo() {
     const nextEvents = Array.isArray(gameEvent) ? gameEvent : [];
     
@@ -319,7 +389,6 @@ function updateCardInfo() {
     
     const currentCount = cardInfo.Cards.length;
     if (playEvents.length < currentCount) cardInfo.Cards = [];
-    if (playEvents.length === currentCount) return;
 
     const newEvents = playEvents.slice(currentCount);
     const newCards = newEvents.map(item => ({
@@ -342,7 +411,6 @@ function updateCardInfo() {
         setTimeout(() => { reactiveCard.isAutoHovered = false;}, 10000); // 過幾秒後自動收起
     }
 
-    // 檢測有沒有卡片的 avatar 與前一張卡片不同，如果不同就顯示 avatar，否則不顯示
     for (let idx = 0; idx < cardInfo.Cards.length; idx++) {
         const card = cardInfo.Cards[idx];
         if (idx === 0) continue;

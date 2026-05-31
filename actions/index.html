@@ -102,13 +102,101 @@
             </div>
         </div>
         <div id="cards" class="order-3 w-[678px] h-full pt-[27px] flex flex-col">
-            <div id="stadium-outer" class="w-full h-[163px] flex justify-center items-center">
-                <p class="w-[5%] -rotate-90 transform translate-y-[30px] font-rog">stadium</p>
-                <div id="stadium" class="w-[90%] h-full bg-slate-700"></div>
-                <p class="w-[5%] rotate-90 transform translate-y-[-30px] font-rog">stadium</p>
+            <div id="stadium-outer" class="w-full flex justify-center items-center" :class="isTwoStadiums ? 'h-[163px]' : 'h-[87px]'">
+                <p class="w-[5%] -rotate-90 transform translate-y-[6px] font-rog">STA</p>
+                <div id="stadium" class="w-[90%] h-full flex flex-row gap-[5px]">
+
+                    <div id="red-stadium" class="w-[50%] h-full flex flex-col gap-[5px] justify-center">
+                        <div v-for="(stadium, idx) in RedStadiums" :key="`red-stadium-${idx}`">
+                            
+                            <div v-if="isBanSectionVisible(stadium)"
+                                class="flex bg-[#253220] border-[#d9ead3] border-[1px] rounded-[10px] items-center gap-2 h-[72px] w-full overflow-hidden"
+                                >
+
+                                <img id="stadium-image" v-if="stadium.id !== 'none'" :src="stadium.imageUrl" class="ml-[10px] mr-[3px] h-[60px] w-[80px] rounded-[15px]"></img>
+                                <div class="flex flex-col">
+                                    <div class="flex flex-row">
+                                        <div class="text-gray-100 text-[20px] leading-tight break-words font-rog">{{ stadium.id }}</div>
+                                        <div class="w-max block font-tpsans-bold text-[16px] pl-3 transform translate-y-[2px]">{{ stadium.name }}</div>
+                                    </div>
+                                    <div class="w-max max-w-[190px] text-[13px] leading-tight font-tpsans-light whitespace-normal line-clamp-2 min-h-[30px]">
+                                        {{ stadium.description }}
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div v-if="!isBanSectionVisible(stadium)" class="flex flex-row gap-[5px]">
+
+                                <div v-for="slot in [0, 1]" class="relative overflow-hidden h-[72px] w-[50%] border-[#d9ead3] border-[1px] rounded-[10px] px-[8px] flex flex-col">
+                                    <img v-if="thisSlotBanDetail(stadium, slot).bgUrl !== '' " :src="thisSlotBanDetail(stadium, slot).bgUrl" 
+                                        class="absolute inset-0 w-full h-full object-cover z-0" alt="ban background">
+                                    
+                                    <div class="relative z-10">
+                                        <p class="font-rog text-[20px]">{{ thisSlotBanInfo(stadium, slot) }}</p>
+                                        <p class="font-rog text-[13px]"
+                                        :class="thisSlotBanInfo(stadium, slot) == '' ? 'mt-[5px]' : 'mt-[-5px]'"
+                                        >
+                                            {{ thisSlotBanInfo(stadium, slot) == '' ? 'banning...' : 'banned' }}
+                                        </p>
+                                    </div>
+                                </div>
+                            
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div id="blue-stadium" class="w-[50%] h-full flex flex-col gap-[5px] justify-center">
+                        <div v-for="(stadium, idx) in BlueStadiums" :key="`blue-stadium-${idx}`">
+                            
+                            <div v-if="isBanSectionVisible(stadium)"
+                                class="flex bg-[#253220] border-[#d9ead3] border-[1px] rounded-[10px] items-center gap-2 h-[72px] w-full overflow-hidden"
+                            >
+                                <img id="stadium-image" v-if="stadium.id !== 'none'" :src="stadium.imageUrl" class="ml-[10px] mr-[3px] h-[60px] w-[80px] rounded-[15px]"></img>
+                                <div class="flex flex-col">
+
+                                    <div class="flex flex-row">
+                                        <div class="text-gray-100 text-[20px] leading-tight break-words font-rog">{{ stadium.id }}</div>
+                                        <div class="w-max block font-tpsans-bold text-[16px] pl-3 transform translate-y-[2px]">{{ stadium.name }}</div>
+                                    </div>
+                                    <div class="w-max max-w-[190px] text-[13px] leading-tight font-tpsans-light whitespace-normal line-clamp-2 min-h-[30px]">
+                                        {{ stadium.description }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div v-if="!isBanSectionVisible(stadium)" class="flex flex-row gap-[5px]">
+
+                                <div v-for="slot in [0, 1]" class="relative overflow-hidden h-[72px] w-[50%] border-[#d9ead3] border-[1px] rounded-[10px] px-[8px] flex flex-col">
+                                    <img v-if="thisSlotBanDetail(stadium, slot).bgUrl !== '' " :src="thisSlotBanDetail(stadium, slot).bgUrl" 
+                                        class="absolute inset-0 w-full h-full object-cover z-0" alt="ban background">
+
+                                    <div :class="
+                                        slot == 0 ? 'absolute inset-0 bg-gradient-to-r from-[#600000]/80 to-[#600000]/40 z-0'
+                                        : 'absolute inset-0 bg-gradient-to-l from-[#000090]/80 to-[#000090]/40 z-0'
+                                    "></div>
+                                    
+                                    <div class="relative z-10">
+                                        <p class="font-rog text-[20px] text-shadow-md">{{ thisSlotBanInfo(stadium, slot) }}</p>
+                                        <p class="font-rog text-[13px] text-shadow-md"
+                                        :class="thisSlotBanInfo(stadium, slot) == '' ? 'mt-[5px]' : 'mt-[-5px]'"
+                                        >
+                                            {{ thisSlotBanInfo(stadium, slot) == '' ? 'banning...' : 'banned' }}
+                                        </p>
+                                    </div>
+                                </div>
+                            
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+                <p class="w-[5%] rotate-90 transform translate-y-[-6px] font-rog">STA</p>
             </div>
             <div id="card-play-outer" class="w-full flex-1 relative">
-                <div class="inset-[5px] absolute top-2 bottom-2 left-0 right-0 rounded-[20px] border-[3px] border-[#7ba4af]">
+                <div class="inset-[5px] absolute top-2 bottom-2 left-0 right-0 rounded-[20px] border-[3px] border-[#7ba4af] bg-[#f6ffce]/10">
                     <p class="font-rog text-[22px] text-center">▲ cards ▲</p>
                     <div id="card-play" class="flex h-[calc(100%-47px)] flex-col-reverse overflow-hidden text-[16px] text-white gap-[5px]">
                         <div v-for="(card, idx) in Cards" :key="`card-${idx}`" class="flex flex-none gap-2 h-[72px] overflow-hidden"
@@ -121,9 +209,8 @@
 
                             <div id="card-info" 
                                 :class="[
-                                    'group rounded-[10px] w-fit max-w-[407px] flex items-center overflow-hidden transition-all duration-300 ease-out', 
-                                    card.type === 'M' ? 'bg-[#21303d] border-[#cfe2f3] border-[1px]' : 
-                                    card.type === 'T' ? 'bg-[#3f252d] border-[#ffdde7] border-[1px]' : 'bg-indigo-600',
+                                    'group rounded-[10px] w-fit max-w-[410px] flex items-center overflow-hidden transition-all duration-300 ease-out', 
+                                    card.type === 'M' ? 'bg-[#21303d] border-[#cfe2f3] border-[1px]' : 'bg-[#3f252d] border-[#ffdde7] border-[1px]',
                                     card.team === 'red' ? 'flex-row' : 'flex-row-reverse'
                                 ]">
                                 
