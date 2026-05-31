@@ -3,7 +3,7 @@
     "round": 3,
     "stadiumCards": [
         "S2",
-        "S5"
+        "S4"
     ],
     "teams": {
         "red": {
@@ -13,8 +13,8 @@
             "handLimit": 5,
             "totalAtk": 1800,
             "totalAtkBonus": 300,
-            "blessings": [],
-            "disasters": [],
+            "blessings": ["拉進垃圾車", "勝利之舞"],
+            "disasters": ["猴子"],
             "hand": [
                 "M14",
                 "M18",
@@ -30,9 +30,7 @@
             "totalAtk": 1200,
             "totalAtkBonus": 150,
             "blessings": [],
-            "disasters": [
-                "緊繃"
-            ],
+            "disasters": ["緊繃", "發燒"],
             "hand": [
                 "M12",
                 "M4",

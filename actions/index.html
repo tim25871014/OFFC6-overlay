@@ -70,13 +70,71 @@
     </div>
 
     <div id="content" class="h-[720px] w-full flex flex-row">
+        <div id="bd-group" class="contents">
+            <div id="red-bd" class="order-1 w-[121px] h-full flex flex-col items-center gap-[4px] p-5 relative top-[-45px] left-[10px]">
+                <img v-for="(card, idx) in redBD" :key="`red-bd-${idx}`" :src="card" class="w-[60px] h-[45px] rounded-[7px]" />
+            </div>
+            <div id="blue-bd" class="order-5 w-[121px] h-full flex flex-col items-center gap-[4px] p-5 relative top-[-45px] left-[-10px]">
+                <img v-for="(card, idx) in blueBD" :key="`blue-bd-${idx}`" :src="card" class="w-[60px] h-[45px] rounded-[7px]" />
+            </div>
+        </div>
+        <div id="picks-group" class="contents">
+            <div v-for="team in [
+                { id: 'red', order: 'order-2', align: 'items-start', innerAlign: '', picks: redPicks, color: 'from-[#600000]/60', bg: '' },
+                { id: 'blue', order: 'order-4', align: 'items-end', innerAlign: 'items-end', picks: bluePicks, color: 'from-[#000090]/60', bg: '' }
+            ]" :key="`${team.id}-picks`" :id="`${team.id}-picks`" :class="[team.order, 'w-[500px] h-[827px] translate-y-[-10px] flex flex-col', team.align]">
+                <div :class="['mt-2', team.margin, 'font-rog text-[26px] text-center w-[167px] h-[45px] bg-linear-to-b from-white/50 via-transparent to-transparent rounded-full']">PICKS</div>
+                <div :class="['flex flex-col gap-3 h-full w-full pb-4 pt-2', team.innerAlign]">
+                    <div v-for="idx in pickCount" :key="`${team.id}-slot-${idx}`" :class="['w-[445px] flex-1 rounded-[14px] relative overflow-hidden', team.bg]">
+                        <div v-if="team.picks[idx - 1]"
+                            class="absolute inset-0 pick-reveal z-0" 
+                            :style="{ backgroundImage: getBeatmap(team.picks[idx - 1])?.bgUrl ? `url(${getBeatmap(team.picks[idx - 1]).bgUrl})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center' }"
+                        ></div>
+                        <div v-if="team.picks[idx - 1]" :class="['absolute inset-0 bg-gradient-to-r via-transparent to-transparent z-0 pick-reveal', team.color]"></div>
+                        <div class="absolute inset-0 rounded-[14px] border-2 border-white/80 pointer-events-none z-10 pick-reveal"></div>
+                        <div class="relative h-full w-full flex flex-col justify-center z-20" :class="team.picks[idx - 1] ? 'pick-reveal' : ''">
+                            <div class="font-rog text-[42px] absolute top-[-5px] left-[20px] right-[20px] text-white truncate text-shadow-lg">{{ getBeatmap(team.picks[idx - 1])?.identifier || '' }}</div>
+                            <div class="font-lexend-regular absolute bottom-[27px] left-[20px] right-[20px] text-[14px] text-white/80 truncate text-shadow-md">{{ getBeatmap(team.picks[idx - 1])?.artist || '' }}</div>
+                            <div class="font-lexend-black absolute bottom-[7px] left-[20px] right-[20px] text-[18px] text-white/90 truncate text-shadow-md">{{ getBeatmap(team.picks[idx - 1])?.title || '' }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="cards" class="order-3 w-[678px] h-full pt-[27px] flex flex-col">
+            <div id="stadium-outer" class="w-full h-[163px] flex justify-center items-center">
+                <p class="w-[5%] -rotate-90 transform translate-y-[30px] font-rog">stadium</p>
+                <div id="stadium" class="w-[90%] h-full bg-slate-700"></div>
+                <p class="w-[5%] rotate-90 transform translate-y-[-30px] font-rog">stadium</p>
+            </div>
+            <div id="card-play-outer" class="w-full flex-1 relative">
+                <div class="inset-[5px] absolute top-2 bottom-2 left-0 right-0 rounded-[20px] border-[3px] border-[#7ba4af]">
+                    <p class="font-rog text-[22px] text-center">▲ cards ▲</p>
+                    <div id="card-play" class="flex h-[calc(100%-47px)] flex-col-reverse overflow-hidden text-[16px] text-white gap-[5px]">
+                        <div v-for="(card, idx) in Cards" :key="`card-${idx}`" class="flex flex-none gap-2 h-[72px] overflow-hidden bg-green-500/50 rounded-[5px]"
+                        :class="card.team == 'red' ? 'flex-row' : 'flex-row-reverse'"
+                        >
+                            
+                            <div id="card-avatar" class="h-full w-[66px] bg-teal-300"></div>
+                            <div id="card-info" :class="['group rounded-[10px] max-w-[407px] flex flex-row gap-2 items-center', card.type === 'M' ? 'bg-[#21303d] border-[#cfe2f3] border-[1px]' : card.type === 'T' ? 'bg-[#3f252d] border-[#ffdde7] border-[1px]' : 'bg-indigo-600']">
+                                <div id="card-image" class="ml-[10px] mr-[3px] h-[60px] w-[80px] flex-none rounded-[15px] bg-lime-400"></div>
+                                
+                                <div id="card-description" class="mr-[20px]">
+                                <div class="flex flex-col group-hover:flex-row group-hover:items-baseline group-hover:gap-3">
+                                    <span class="text-gray-100 text-[20px] leading-tight break-words font-rog">{{ card.id }}</span>
+                                    <span class="font-tpsans-bold text-[16px] tansfrom group-hover:translate-y-[-1px]">{{ card.name }}</span>
+                                </div>
 
-        <div id="red-bd" class="w-[121px] h-full bg-red-500"></div>
-        <div id="red-picks" class="w-[500px] h-full bg-slate-400"></div>
-        <div id="cards" class="w-[678px] h-full bg-yellow-500"></div>
-        <div id="blue-picks" class="w-[500px] h-full bg-slate-400"></div>
-        <div id="blue-bd" class="w-[121px] h-full bg-blue-500"></div>
-        
+                                <div class="hidden group-hover:block h-[35px] text-[13px] leading-tight font-tpsans-light">{{ card.description }}</div>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div id="footer" class="relative bottom-0 flex h-[204px] w-full px-[20px]">
@@ -103,17 +161,35 @@
 <div id="control-panel" class="absolute left-[1950px] flex gap-3 m-4 text-white flex-col">
     <button class="bg-black size-25" @click="toggleComboMode">Combo Mode: {{ comboMode }}</button>
     <button class="bg-black size-25" @click="toggleChat">Force Chat: {{ chatMode }}</button>
+    <div id="mappool" class="text-black font-lexend-regular grid grid-flow-col auto-cols-max grid-rows-10 gap-2">
+        <button
+            v-for="(identifier, idx) in mappoolButtons"
+            :key="`mappool-${idx}`"
+            class="bg-green-300 text-black rounded px-2 py-1 text-[20px]"
+            @pointerdown.prevent="handlePickAction($event, identifier)"
+            @contextmenu.prevent
+        >{{ identifier }}</button>
+        
+    </div>
+    <div id="ex-selector" class="text-black font-lexend-regular flex flex-col gap-2 items-start">
+        <p class="text-center font-lexend-black text-[20px] mt-4">EX maps</p>
+        <select v-model="selectedStage" @change="onStageChange" class="bg-white text-black rounded px-2 py-1 text-[20px]">
+            <option value="" disabled>select stage</option>
+            <option v-for="(stage, idx) in stages" :key="`stage-${idx}`" :value="stage">{{ stage }}</option>
+        </select>
+        <div v-if="selectedStage" class="flex flex-col gap-2">
+            <select v-model="selectedBeatmapIndex" class="bg-white text-black rounded px-2 py-1 text-[20px]">
+                <option value="" disabled>select map</option>
+                <option v-for="(beatmap, idx) in beatmapOptions" :key="`beatmap-${idx}`" :value="idx">{{ beatmap.label }}</option>
+            </select>
+            <button
+                v-if="selectedBeatmapIndex !== ''"
+                class="bg-amber-300 text-black rounded px-2 py-1 text-[20px]"
+                @click="addExBeatmap"
+            >Add EX</button>
+        </div>
+    </div>
 </div>
-
-<style>
-    @keyframes blink {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.6; }
-    }
-    .blink-anim {
-        animation: blink 0.8s 3 ease-in-out;
-    }
-</style>
 
 <script src="./script.js" defer></script>
 

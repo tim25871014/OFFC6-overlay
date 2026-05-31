@@ -151,6 +151,8 @@ createApp({
                 return;
             }
 
+            console.log('[worker]', payload.type, payload?.events?.length ?? '', payload.force ? 'force' : '');
+
             if (payload.type === 'snapshot') {
                 this.setGameStatus(payload.snapshot);
                 return;
@@ -158,7 +160,7 @@ createApp({
 
             if (payload.type === 'events') {
                 if (Array.isArray(payload.events) && payload.events.length) {
-                    this.setGameEvents(payload.events);
+                    this.setGameEvents(payload.events, Boolean(payload.force));
                 }
                 return;
             }
@@ -225,20 +227,49 @@ createApp({
             this.updateEventText();
             return true;
         },
-        setGameEvents(eventItems) {
+        setGameEvents(eventItems, force = false) {
             const list = Array.isArray(eventItems) ? eventItems : [];
             if (!list.length) {
                 return false;
             }
 
+            if (force) {
+                // Merge/replace by seq so modified old events are applied
+                const existingBySeq = new Map();
+                for (const ev of this.gameEvent) {
+                    const s = Number(ev?.seq);
+                    if (Number.isFinite(s)) existingBySeq.set(s, ev);
+                }
+
+                for (const item of list) {
+                    const s = Number(item?.seq);
+                    if (!Number.isFinite(s)) continue;
+                    existingBySeq.set(s, item);
+                    this.lastEventSeq = Math.max(this.lastEventSeq, s);
+                }
+
+                // Rebuild ordered array
+                const merged = Array.from(existingBySeq.entries())
+                    .sort((a, b) => a[0] - b[0])
+                    .map(([_, v]) => v)
+                    .slice(-MAX_EVENT_LOG);
+
+                this.gameEvent = merged;
+                this.updateEventText();
+                console.log('[events] merged, total=', this.gameEvent.length);
+                return true;
+            }
+
             let changed = false;
             for (const item of list) {
-                if (item && typeof item.seq === 'number' && item.seq > this.lastEventSeq) {
+                const seq = Number(item?.seq);
+                if (Number.isFinite(seq) && seq > this.lastEventSeq) {
                     this.appendGameEvent(item);
-                    this.lastEventSeq = item.seq;
+                    this.lastEventSeq = seq;
                     changed = true;
                 }
             }
+            if (changed) console.log('[events] appended, lastSeq=', this.lastEventSeq);
             return changed;
         },
         formatInstanceLabel(instance) {
@@ -349,7 +380,7 @@ createApp({
                 window.clearInterval(this.scoreboardTimer);
             }
             this.scoreboardTimer = window.setInterval(() => {
-                this.pollScoreboard().catch(() => {});
+                this.pollScoreboard(true).catch(() => {});
             }, SCOREBOARD_POLL_MS);
         },
         stopTimer() {

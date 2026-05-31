@@ -72,6 +72,27 @@ body {
 	100% { background-size: 100% 0%; }
 }
 
+@keyframes pick-reveal {
+	0% {
+		opacity: 0;
+		transform: scaleX(0);
+	}
+	100% {
+		opacity: 1;
+		transform: scaleX(1);
+	}
+}
+
+.pick-reveal {
+	transform-origin: center;
+	animation: pick-reveal 0.35s ease-out;
+}
+
+.pick-reveal-content {
+	transform-origin: center;
+	animation: pick-reveal 0.35s ease-out;
+}
+
 .scanline {
 	background-image: linear-gradient(to bottom, transparent 0%, rgba(255, 255, 255, 0.75) 50%, transparent 100%);
 	background-repeat: no-repeat;

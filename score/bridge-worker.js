@@ -52,7 +52,7 @@ function startTimer() {
         return;
     }
     timerId = setInterval(() => {
-        pollScoreboard(false).catch(() => {});
+        pollScoreboard(true).catch(() => {});
     }, pollMs);
 }
 
@@ -81,16 +81,29 @@ async function pollScoreboard(force = false) {
         }
 
         if (Array.isArray(payload?.events) && payload.events.length) {
-            const newEvents = [];
-            for (const item of payload.events) {
-                if (item && typeof item.seq === 'number' && item.seq > lastEventSeq) {
-                    newEvents.push(item);
-                    lastEventSeq = Math.max(lastEventSeq, item.seq);
+            if (force) {
+                // On forced (full) fetch, send all events so client can merge/replace
+                sendMessage({ type: 'events', events: payload.events, force: true });
+                // update lastEventSeq to highest seq in payload
+                for (const item of payload.events) {
+                    const seq = Number(item?.seq);
+                    if (Number.isFinite(seq)) {
+                        lastEventSeq = Math.max(lastEventSeq, seq);
+                    }
                 }
-            }
+            } else {
+                const newEvents = [];
+                for (const item of payload.events) {
+                    const seq = Number(item?.seq);
+                    if (Number.isFinite(seq) && seq > lastEventSeq) {
+                        newEvents.push(item);
+                        lastEventSeq = Math.max(lastEventSeq, seq);
+                    }
+                }
 
-            if (newEvents.length) {
-                sendMessage({ type: 'events', events: newEvents });
+                if (newEvents.length) {
+                    sendMessage({ type: 'events', events: newEvents, force: false });
+                }
             }
         }
 

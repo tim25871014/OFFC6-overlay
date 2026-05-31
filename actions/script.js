@@ -2,33 +2,39 @@ const ws = ConnectSocket();
 
 const { createApp, ref } = Vue;
 
-const mappoolView = createApp({ setup() {
-    const mods = ref([]);
-    const pickState = ref({});
-    const blinkState = ref({});
+const cardNameToId = {
+    '發燒': 'D1',
+    '猴子': 'D2',
+    '緊繃': 'D3',
+    '勝利之舞': 'B1',
+    '拉進垃圾車': 'B2',
+    '黃金的守護者 魔法之光的龍': 'B3'
+};
 
-    const onPick = (event, identifier, color) => {
-        if (event.ctrlKey) pickState.value[identifier] = 'none';
-        else if (event.shiftKey) pickState.value[identifier] = `${color}-ban`;
-        else {
-            pickState.value[identifier] = color;
-            blinkState.value[identifier] = true;
-            window.setTimeout(() => { blinkState.value[identifier] = false; }, 3000);
-        }
+const bdInfo = createApp({ setup() {
+    return {
+        redBD: ref([]),
+        blueBD: ref([])
     };
+}}).mount('#bd-group');
 
-    const stateStyles = {
-        'none': 'border-gray-300',
-        'red': 'border-red-500',
-        'blue': 'border-blue-500',
-        'red-ban': 'border-red-500 brightness-75',
-        'blue-ban': 'border-blue-500 brightness-75',
+const picksInfo = createApp({ setup() {
+    const getBeatmap = (identifier) => {
+        return picksInfo.beatmapMap?.[identifier] || null;
     };
 
     return {
-        mods, pickState, blinkState, onPick, stateStyles
+        redStadiums: ref([]),
+        blueStadiums: ref([]),
+        redBans: ref([]),
+        blueBans: ref([]),
+        redPicks: ref([]),
+        bluePicks: ref([]),
+        pickCount: ref(0),
+        beatmapMap: ref({}),
+        getBeatmap
     };
-}}).mount('#content');
+}}).mount('#picks-group');
 
 const StageInfo = createApp({ setup() {
     return {
@@ -67,6 +73,12 @@ const chatInfo = createApp({ setup() {
     }
 }}).mount('#chat');
 
+const cardInfo = createApp({ setup() {
+    return {
+        Cards: ref([])
+    }
+}}).mount('#cards');
+
 const controlPanel = createApp({ setup() {
 
     const toggleComboMode = () => {
@@ -77,11 +89,61 @@ const controlPanel = createApp({ setup() {
         controlPanel.chatMode = !controlPanel.chatMode;
     }
 
+    const onStageChange = () => {
+        refreshBeatmapOptions();
+    };
+
+    const addExBeatmap = () => {
+        const index = Number(controlPanel.selectedBeatmapIndex);
+        const option = controlPanel.beatmapOptions?.[index];
+        if (!option || !pool?.beatmaps) return;
+
+        const exCount = pool.beatmaps.filter(beatmap => /^EX\d+$/i.test(beatmap.identifier)).length;
+        const newBeatmap = { ...option.beatmap, identifier: `EX${exCount + 1}` };
+        pool.beatmaps = [...pool.beatmaps, newBeatmap];
+        refreshMappool();
+        resetExSelectors();
+    };
+
+    const resetExSelectors = () => {
+        controlPanel.selectedStage = '';
+        controlPanel.beatmapOptions = [];
+        controlPanel.selectedBeatmapIndex = '';
+    };
+
+    const removeIdentifierFromLists = (identifier) => {
+        picksInfo.redPicks = picksInfo.redPicks.filter(item => item !== identifier);
+        picksInfo.bluePicks = picksInfo.bluePicks.filter(item => item !== identifier);
+        picksInfo.redBans = picksInfo.redBans.filter(item => item !== identifier);
+        picksInfo.blueBans = picksInfo.blueBans.filter(item => item !== identifier);
+    };
+
+    const handlePickAction = (event, identifier) => {
+        if (event.button !== 0 && event.button !== 2) return;
+        const side = event.button === 0 ? 'red' : 'blue';
+        removeIdentifierFromLists(identifier);
+        if (event.ctrlKey) return;
+
+        const isBan = event.shiftKey;
+        if (side === 'red') {
+            if (isBan) picksInfo.redBans = [...picksInfo.redBans, identifier];
+            else picksInfo.redPicks = [...picksInfo.redPicks, identifier];
+        } else {
+            if (isBan) picksInfo.blueBans = [...picksInfo.blueBans, identifier];
+            else picksInfo.bluePicks = [...picksInfo.bluePicks, identifier];
+        }
+    };
+
     return {
         comboMode: ref(false),
         chatMode: ref(true),
-        toggleComboMode,
-        toggleChat
+        mappoolButtons: ref([]),
+        stages: ref([]),
+        selectedStage: ref(''),
+        beatmapOptions: ref([]),
+        selectedBeatmapIndex: ref(''),
+        toggleComboMode, toggleChat, onStageChange,
+        addExBeatmap, resetExSelectors, handlePickAction
     }
 }}).mount('#control-panel');
 
@@ -93,13 +155,61 @@ let mappools = {}, pool = {}, teams = [];
     mappools = await fetch('../_data/config/mappools.json').then(res => res.json());
     teams = await fetch('../_data/config/teams.json').then(res => res.json());
     updateStageInfo();
+    refreshStageOptions();    
 })();
+
 
 function updateStageInfo() {
     const stage = mappools?.current_stage || "Unknown Stage";
-    // 從 mappools.mappools 找到 stage = current_stage 的物件
     pool = mappools?.mappools?.find(p => p.stage === stage);
     StageInfo.Stage = stage;
+    refreshMappool();
+}
+
+function refreshMappool() {
+    controlPanel.mappoolButtons = pool?.beatmaps?.map(b => b.identifier).filter(Boolean) || [];
+    updateBeatmapMap();
+}
+
+function updateBeatmapMap() {
+    const beatmaps = Array.isArray(pool?.beatmaps) ? pool.beatmaps : [];
+    const nextMap = {};
+    beatmaps.forEach((beatmap) => {
+        if (!beatmap?.identifier) return;
+        nextMap[beatmap.identifier] = {
+            identifier: beatmap.identifier,
+            artist: beatmap.artist || '',
+            title: beatmap.title || '',
+            beatmapset_id: beatmap.beatmapset_id,
+            bgUrl: beatmap.beatmapset_id
+                ? `https://assets.ppy.sh/beatmaps/${beatmap.beatmapset_id}/covers/cover.jpg`
+                : ''
+        };
+    });
+    picksInfo.beatmapMap = nextMap;
+}
+
+function refreshStageOptions() {
+    controlPanel.stages = mappools?.mappools?.map(p => p.stage).filter(Boolean) || [];
+    controlPanel.selectedStage = '';
+    controlPanel.beatmapOptions = [];
+    controlPanel.selectedBeatmapIndex = '';
+}
+
+function refreshBeatmapOptions() {
+    const stage = controlPanel.selectedStage;
+    if (!stage) {
+        controlPanel.beatmapOptions = [];
+        controlPanel.selectedBeatmapIndex = '';
+        return;
+    }
+    const stagePool = mappools?.mappools?.find(p => p.stage === stage) || {};
+    const beatmaps = Array.isArray(stagePool?.beatmaps) ? stagePool.beatmaps : [];
+    controlPanel.beatmapOptions = beatmaps.map((beatmap, index) => ({
+        label: beatmap.identifier || beatmap.title || `Map ${index + 1}`,
+        beatmap
+    }));
+    controlPanel.selectedBeatmapIndex = '';
 }
 
 /////////////////////////////////////////////////////////////
@@ -112,7 +222,13 @@ ws.onmessage = (event) => {
     let tourneyMng = data.tourney;
     updateTeamInfo(tourneyMng);
     updateChat(tourneyMng);
+    generatePickSlots(tourneyMng);
 };
+
+function generatePickSlots(tourneyMng) {
+    const bo = tourneyMng?.bestOF || 9;
+    picksInfo.pickCount = Math.floor(bo / 2);
+}
 
 function updateTeamInfo(tourneyMng) {
     teamInfo.RedTeamName = tourneyMng?.team?.left || "Red Team";
@@ -130,15 +246,14 @@ function updateChat(tourneyMng) {
     const nextMessages = Array.isArray(tourneyMng?.chat) ? tourneyMng.chat : [];
     chatInfo.messages = nextMessages
         .filter(item => item?.name !== 'BanchoBot')
-        .filter(item => !(item?.messageBody || '').startsWith('Match history'))
+        .filter(item => !(item?.message || '').startsWith('Match history'))
         .map(item => ({
-            time: item?.time || '',
+            timestamp: item?.timestamp || '',
             name: item?.name || '',
-            messageBody: item?.messageBody || '',
+            message: item?.message || '',
             team: item?.team || ''
         }))
-        .reverse();
-    
+        .reverse(); 
 }
 
 /////////////////////////////////////////////////////////////
@@ -150,6 +265,8 @@ let gameEvent = [];
 setInterval(() => {
     loadGameState(localStorage.getItem('game-state'));
     updateRefInfo();
+    updateBDInfo();
+    updateCardInfo();
 }, 1000);
 
 function loadGameState(value) {
@@ -169,4 +286,36 @@ function updateRefInfo() {
     teamInfo.MaxHP = Math.max(teamInfo.MaxHP, teamInfo.RedTeamHP, teamInfo.BlueTeamHP);
     teamInfo.RedTeamHPPercent = teamInfo.MaxHP > 0 ? (teamInfo.RedTeamHP / teamInfo.MaxHP * 100) : 0;
     teamInfo.BlueTeamHPPercent = teamInfo.MaxHP > 0 ? (teamInfo.BlueTeamHP / teamInfo.MaxHP * 100) : 0;
+}
+
+function updateBDInfo() {
+    const redTeam = gameStatus?.teams?.red || {};
+    const blueTeam = gameStatus?.teams?.blue || {};
+
+    const toCardUrls = (team) => {
+        const blessings = Array.isArray(team?.blessings) ? team.blessings : [];
+        const disasters = Array.isArray(team?.disasters) ? team.disasters : [];
+        return [...blessings, ...disasters]
+            .map(name => cardNameToId[name])
+            .filter(Boolean)
+            .map(id => `../_data/img/cards/${id}.png`);
+    };
+
+    bdInfo.redBD = toCardUrls(redTeam);
+    bdInfo.blueBD = toCardUrls(blueTeam);
+}
+
+function updateCardInfo() {
+    // gameEvent 這個陣列裡會有一些卡片相關的事件，如果 type = "play" 的話，就塞進 cardInfo.Cards
+    const nextEvents = Array.isArray(gameEvent) ? gameEvent : [];
+    cardInfo.Cards = nextEvents
+        .filter(item => item?.type == 'play')
+        .map(item => ({
+            team: item?.team || '',
+            id: item?.card || '',
+            name: item?.cardName || '',
+            type: item?.cardType || '',
+            description: (item.cardType == 'M') ? (item?.effect) : (item?.trigger + '，' + item?.effect) || '',
+        }))
+        .reverse();
 }

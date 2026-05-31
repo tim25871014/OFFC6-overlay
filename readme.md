@@ -9,3 +9,5 @@ with Vue / tailwind CSS
 
 ### do to 
 countup.js
+自動選圖
+自動判斷圖譜勝負
