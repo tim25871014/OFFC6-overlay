@@ -32,6 +32,7 @@ const picksInfo = createApp({ setup() {
         bluePicks: ref([]),
         pickCount: ref(0),
         beatmapMap: ref({}),
+        TBPicked: ref(false),
         getBeatmap
     };
 }}).mount('#picks-group');
@@ -174,6 +175,13 @@ const controlPanel = createApp({ setup() {
         updateStadiumInfo();
     };
 
+    const handleTBAction = (event, identifier) => {
+        if (event.button !== 0 && event.button !== 2) return;
+
+        if (event.ctrlKey) return picksInfo.TBPicked = false;
+        else return picksInfo.TBPicked = true;
+    }
+
     return {
         comboMode: ref(false),
         chatMode: ref(true),
@@ -183,7 +191,7 @@ const controlPanel = createApp({ setup() {
         beatmapOptions: ref([]),
         selectedBeatmapIndex: ref(''),
         toggleComboMode, toggleChat, onStageChange,
-        addExBeatmap, resetExSelectors, handlePickAction
+        addExBeatmap, resetExSelectors, handlePickAction, handleTBAction
     }
 }}).mount('#control-panel');
 

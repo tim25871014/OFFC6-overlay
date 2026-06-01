@@ -100,6 +100,9 @@
                     </div>
                 </div>
             </div>
+            <div v-if="TBPicked" class="absolute z-50 h-[600px] w-[900px] bg-teal-300 duration-300">
+                TB
+            </div>
         </div>
         <div id="cards" class="order-3 w-[678px] h-full pt-[27px] flex flex-col">
             <div id="stadium-outer" class="w-full flex justify-center items-center" :class="isTwoStadiums ? 'h-[163px]' : 'h-[87px]'">
@@ -302,13 +305,30 @@
     <button class="bg-black size-25" @click="toggleComboMode">Combo Mode: {{ comboMode }}</button>
     <button class="bg-black size-25" @click="toggleChat">Force Chat: {{ chatMode }}</button>
     <div id="mappool" class="text-black font-lexend-regular grid grid-flow-col auto-cols-max grid-rows-10 gap-2">
-        <button
-            v-for="(identifier, idx) in mappoolButtons"
-            :key="`mappool-${idx}`"
-            class="bg-green-300 text-black rounded px-2 py-1 text-[20px]"
-            @pointerdown.prevent="handlePickAction($event, identifier)"
-            @contextmenu.prevent
-        >{{ identifier }}</button>
+        <div v-for="(identifier, idx) in mappoolButtons" :key="`mappool-${idx}`">
+            <button
+                v-if="identifier !== 'TB'"
+                :key="`mappool-${idx}`"
+                class="text-black rounded px-2 py-1 text-[20px] w-[60px] text-center"
+                :class="
+                    (identifier.includes('NM')) ? 'bg-blue-300' :
+                    (identifier.includes('HD')) ? 'bg-yellow-300' :
+                    (identifier.includes('HR')) ? 'bg-red-300' :
+                    (identifier.includes('DT')) ? 'bg-purple-300' :
+                    (identifier.includes('FM')) ? 'bg-teal-300' :
+                    (identifier.includes('HP')) ? 'bg-green-300' : 'bg-gray-300'
+                "
+                @pointerdown.prevent="handlePickAction($event, identifier)"
+                @contextmenu.prevent
+            >{{ identifier }}</button>
+            <button v-if="identifier === 'TB'"
+                class="text-black rounded px-2 py-1 text-[20px] w-[60px] text-center bg-pink-300"
+                @pointerdown.prevent="handleTBAction($event)"
+                @contextmenu.prevent
+            >
+                TB
+            </button>
+        </div>
         
     </div>
     <div id="ex-selector" class="text-black font-lexend-regular flex flex-col gap-2 items-start">

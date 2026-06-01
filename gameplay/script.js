@@ -48,25 +48,45 @@ const scoreInfo = createApp({ setup() {
 
     const scoreBarStyle = (barWidth, borderWidth = 0) => {
 
-        barWidth = Math.round(barWidth);
-        borderWidth = Math.round(borderWidth);
+        let barStyle = {}, shadowStyle = {};
+        let barPosition = { width: `${Math.abs(barWidth)}px` };
 
-        const totalWidth = barWidth + borderWidth;
-        const sameDirection = Math.sign(barWidth) === Math.sign(borderWidth) || borderWidth === 0;
-        const offset = sameDirection ? 0 : -borderWidth;
+        barStyle = (barWidth >= 0) ? { right: '50%', borderBottomLeftRadius: '15px' } 
+                                     : { left: '50%', borderBottomRightRadius: '15px' };
 
-        let barStyle = {}, borderStyle = {};
-        let barPosition = { width: `${Math.abs(totalWidth)}px`, transform: `translateX(${offset}px)` };
-
-        barStyle = (totalWidth >= 0) ? { right: '50%', borderBottomLeftRadius: '5px' } 
-                                     : { left: '50%', borderBottomRightRadius: '5px' };
-
-        borderStyle = (borderWidth >= 0) ? { borderLeft: `${Math.abs(borderWidth)}px solid #E57373` }
-                                         : { borderRight: `${Math.abs(borderWidth)}px solid #64B5F6` };
-
-        return { ...barPosition, ...barStyle, ...borderStyle };
+        return { ...barPosition, ...barStyle };
 
     };
+
+    const extendedScoreBarStyle = (barWidth, borderWidth = 0) => {
+        if (barWidth >= 0 && borderWidth >= 0) return {
+            right: '50%',
+            width: `${Math.abs(barWidth) + Math.abs(borderWidth)}px`,
+            backgroundColor: '#E57373',
+            borderBottomLeftRadius: '15px' 
+        }
+        else if (barWidth < 0 && borderWidth < 0) return {
+            left: '50%',
+            width: `${Math.abs(barWidth) + Math.abs(borderWidth)}px`,
+            backgroundColor: '#64B5F6',
+            borderBottomRightRadius: '15px' 
+        }
+        else return { width: '0px' };
+    }
+
+    const reversedScoreBarStyle = (barWidth, borderWidth = 0) => {
+        if (barWidth < 0 && borderWidth >= 0) return {
+            right: '50%',
+            width: `${Math.abs(borderWidth)}px`,
+            backgroundColor: '#E57373'
+        }
+        else if (barWidth >= 0 && borderWidth < 0) return {
+            left: '50%',
+            width: `${Math.abs(borderWidth)}px`,
+            backgroundColor: '#64B5F6'
+        }
+        else return { width: '0px' };
+    }
 
     const scoreSize = (value) => {
         if (value >= 0) { return { fontSize: '38px', transform: 'translateY(-4px)' };
@@ -80,6 +100,8 @@ const scoreInfo = createApp({ setup() {
         BorderWidth: ref(0),
         formatNumber,
         scoreBarStyle,
+        extendedScoreBarStyle,
+        reversedScoreBarStyle,
         scoreSize
     }
 

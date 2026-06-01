@@ -1,5 +1,5 @@
 function ConnectSocket() {
-    let mode = "release";
+    let mode = "debu";
     if (mode == "debug") {
         return new WebSocket('ws://127.0.0.1:3000/ws');
     } else {

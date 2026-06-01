@@ -86,7 +86,15 @@
 
         <div id="score-info" class="absolute top-0 w-[70%] left-[50%] transform -translate-x-1/2 flex h-[102px] flex-col">
 
-            <div class="absolute top-0 h-[20px] bg-white transition-[width,border-left-width,border-right-width] duration-300 ease-out"
+            <div id="reversed-score-bar" class="absolute top-0 h-[20px] transition-[width] duration-500 ease-out"
+                :style="reversedScoreBarStyle(BarWidth, BorderWidth)"
+            ></div>
+
+            <div id="extended-score-bar" class="absolute top-0 h-[20px] transition-[width] duration-500 ease-out"
+                :style="extendedScoreBarStyle(BarWidth, BorderWidth)"
+            ></div>
+
+            <div id="score-bar" class="absolute top-0 h-[20px] bg-white transition-[width] duration-500 ease-out"
                 :style="scoreBarStyle(BarWidth, BorderWidth)"
             ></div>
     
