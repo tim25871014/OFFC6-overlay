@@ -16,8 +16,6 @@ With [Vue](https://vuejs.org/) & [Tailwind CSS](https://tailwindcss.com/)
 5. 隊伍/圖池的資訊要放在 `./_data/config` 裡面，範例格式可以看裡面的 `mappools.json` 與 `teams.json`。
 
 ### do to 
-countup.js
 自動選圖
 自動判斷圖譜勝負
-EZ multiplier
 TB畫面
