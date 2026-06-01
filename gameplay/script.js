@@ -24,7 +24,7 @@ const mapInfo = createApp({ setup() {
         { label: 'OD', value: OD.value },
         { label: 'BPM', value: BPM.value },
         { label: 'LEN', value: LEN.value },
-        { label: 'SR', value: SR.value }
+        { label: 'SR', value: SR.value + '★' }
     ]));
 
     return {
@@ -47,33 +47,25 @@ const scoreInfo = createApp({ setup() {
     }
 
     const scoreBarStyle = (barWidth, borderWidth = 0) => {
+
+        barWidth = Math.round(barWidth);
+        borderWidth = Math.round(borderWidth);
+
         const totalWidth = barWidth + borderWidth;
-        const width = Math.abs(totalWidth);
         const sameDirection = Math.sign(barWidth) === Math.sign(borderWidth) || borderWidth === 0;
         const offset = sameDirection ? 0 : -borderWidth;
 
-        if (totalWidth >= 0) {
-            return {
-                left: '50%',
-                transform: `translateX(-100%) translateX(${offset}px)` ,
-                width: `${width}px`,
-                borderBottomLeftRadius: '5px'
-            };
-        }
+        let barStyle = {}, borderStyle = {};
+        let barPosition = { width: `${Math.abs(totalWidth)}px`, transform: `translateX(${offset}px)` };
 
-        return {
-            left: '50%',
-            transform: `translateX(${offset}px)` ,
-            width: `${width}px`,
-            borderBottomRightRadius: '5px'
-        };
-    };
+        barStyle = (totalWidth >= 0) ? { right: '50%', borderBottomLeftRadius: '5px' } 
+                                     : { left: '50%', borderBottomRightRadius: '5px' };
 
-    const scoreBorderStyle = (value) => {
-        const width = Math.abs(value);
-        if (value >= 0) { 
-            return { borderLeft: `${width}px solid #E57373` };
-        } else return { borderRight: `${width}px solid #64B5F6` };
+        borderStyle = (borderWidth >= 0) ? { borderLeft: `${Math.abs(borderWidth)}px solid #E57373` }
+                                         : { borderRight: `${Math.abs(borderWidth)}px solid #64B5F6` };
+
+        return { ...barPosition, ...barStyle, ...borderStyle };
+
     };
 
     const scoreSize = (value) => {
@@ -88,9 +80,9 @@ const scoreInfo = createApp({ setup() {
         BorderWidth: ref(0),
         formatNumber,
         scoreBarStyle,
-        scoreSize,
-        scoreBorderStyle
+        scoreSize
     }
+
 }}).mount('#score-info');
 
 const teamInfo = createApp({ setup() {
@@ -246,20 +238,59 @@ function updateStageInfo() {
 }
 
 function updateMapData(beatmapMng) {
-    mapInfo.AR = beatmapMng.stats.ar.converted.toFixed(1);
-    mapInfo.CS = beatmapMng.stats.cs.converted.toFixed(1);
-    mapInfo.OD = beatmapMng.stats.od.converted.toFixed(1);
-    mapInfo.SR = beatmapMng.stats.stars.total.toFixed(2);
-    mapInfo.BPM = beatmapMng.stats.bpm.common.toFixed(0);
-    mapInfo.LEN = formatTime(beatmapMng.time.lastObject - beatmapMng.time.firstObject);
+
+    function convertAR(ar, mods) {
+        if (mods.includes("HR")) return Math.min(10, ar * 1.4);
+        else if (mods.includes("EZ")) return ar * 0.5;
+        else if (mods.includes("DT")) return (ar * 2 + 13) / 3;
+        else return ar;
+    }
+    function convertCS(cs, mods) {
+        if (mods.includes("HR")) return Math.min(10, cs * 1.3);
+        else if (mods.includes("EZ")) return cs * 0.5;
+        else return cs;
+    }
+    function convertOD(od, mods) {
+        if (mods.includes("HR")) return Math.min(10, od * 1.4);
+        else if (mods.includes("EZ")) return od * 0.5;
+        else if (mods.includes("DT")) return (od * 2 + 13) / 3 + 0.11;
+        else return od;
+    }
+    function convertBPM(bpm, mods) {
+        if (mods.includes("DT")) return bpm * 1.5;
+        else return bpm;
+    }
+    function convertedTime(time, mods) {
+        if (mods.includes("DT")) return time / 1.5;
+        else return time;
+    }
+    
+    const beatmap = pool?.beatmaps?.find(b => b.beatmap_id === beatmapMng.id);
+    mapInfo.MapIdentifier = beatmap ? beatmap.identifier : "EX";
+    mapMods = beatmap ? beatmap.mods : "";
+
+    // 這裡加上圖 mod 偵測
+    if (mapInfo.MapIdentifier == "EX") {
+        mapInfo.AR = beatmapMng.stats.ar.original.toFixed(1);
+        mapInfo.CS = beatmapMng.stats.cs.original.toFixed(1);
+        mapInfo.OD = beatmapMng.stats.od.original.toFixed(1);
+        mapInfo.SR = beatmapMng.stats.stars.total.toFixed(2);
+        mapInfo.BPM = beatmapMng.stats.bpm.common.toFixed(0);
+        mapInfo.LEN = formatTime(beatmapMng.time.lastObject - beatmapMng.time.firstObject);
+    }
+    else {
+        mapInfo.AR = convertAR(beatmapMng.stats.ar.original, mapMods).toFixed(1);
+        mapInfo.CS = convertCS(beatmapMng.stats.cs.original, mapMods).toFixed(1);
+        mapInfo.OD = convertOD(beatmapMng.stats.od.original, mapMods).toFixed(1);
+        mapInfo.SR = beatmap.sr.toFixed(2);
+        mapInfo.BPM = convertBPM(beatmapMng.stats.bpm.common, mapMods).toFixed(0);
+        mapInfo.LEN = formatTime(convertedTime(beatmapMng.time.lastObject - beatmapMng.time.firstObject, mapMods));
+    }
 
     mapInfo.Title = beatmapMng.title;
     mapInfo.Artist = beatmapMng.artist;
     mapInfo.Creator = beatmapMng.mapper;
     mapInfo.Difficulty = beatmapMng.version;
-
-    const beatmap = pool?.beatmaps?.find(b => b.beatmap_id === beatmapMng.id);
-    mapInfo.MapIdentifier = beatmap ? beatmap.identifier : "EX";
 
     if (beatmapMng.id != mapInfo.mapId) { // map has changed
         mapInfo.mapId = beatmapMng.id;
@@ -286,8 +317,18 @@ function updateScoreData(tourneyMng) {
     let redTeamScore = 0, blueTeamScore = 0;
 
     if (!controlPanel.comboMode) {
-        redTeamScore = redTeam.reduce((sum, client) => sum + client.play.score, 0);
-        blueTeamScore = blueTeam.reduce((sum, client) => sum + client.play.score, 0);
+        // 如果 client.play.mods.name 包含 "EZ"，則該玩家分數乘以 1.8
+        redTeamScore = redTeam.reduce((sum, client) => {
+            let score = client.play.score || 0;
+            if (client.play.mods?.name?.includes("EZ")) score = Math.round(score * 1.8);
+            return sum + score;
+        }, 0);
+        blueTeamScore = blueTeam.reduce((sum, client) => {
+            let score = client.play.score || 0;
+            if (client.play.mods?.name?.includes("EZ")) score = Math.round(score * 1.8);
+            return sum + score;
+        }, 0);
+
     } else {
         redTeamScore = redTeam.reduce((sum, client) => sum + client.play.combo.max, 0);
         blueTeamScore = blueTeam.reduce((sum, client) => sum + client.play.combo.max, 0);
@@ -317,7 +358,7 @@ function getBarWidthDelta(currentWidth) {
         lastBarWidthChangeAt = now;
     }
 
-    if (now - lastBarWidthChangeAt > 2000) return 0;
+    if (now - lastBarWidthChangeAt > 2000 || currentWidth === 0) return 0;
 
     const cutoff = now - 1000;
     while (barWidthHistory.length && barWidthHistory[0].t < now - 1000) {
@@ -347,18 +388,6 @@ function mapScoreWidth(x) {
     else return width;
 }
 
-function mapForceWidth(x) {
-    let width;
-    if (!controlPanel.comboMode) {
-        width = 200 * Math.tanh(x / 300000);
-    } else {
-        width = 5 * Math.sign(x);
-    }
-    if (width > 15) return 15;
-    else if (width < -15) return -15;
-    else return width;
-}
-
 function updateTeamInfo(tourneyMng) {
     teamInfo.RedTeamName = tourneyMng?.team?.left || "Red Team";
     teamInfo.BlueTeamName = tourneyMng?.team?.right || "Blue Team";
@@ -366,8 +395,8 @@ function updateTeamInfo(tourneyMng) {
     // 要去 teams.json 找對應隊伍的 avatar，沒有就用空字串
     let redTeamData = teams.find(team => team.teamName === teamInfo.RedTeamName);
     let blueTeamData = teams.find(team => team.teamName === teamInfo.BlueTeamName);
-    teamInfo.RedTeamAvatar = "../_data/img/avatar/" + (redTeamData ? redTeamData.avatar : "");
-    teamInfo.BlueTeamAvatar = "../_data/img/avatar/" + (blueTeamData ? blueTeamData.avatar : "");
+    teamInfo.RedTeamAvatar = "../_data/img/avatar/" + (redTeamData?.avatar || "default.jpg");
+    teamInfo.BlueTeamAvatar = "../_data/img/avatar/" + (blueTeamData?.avatar || "default.jpg");
 }
 
 /////////////////////////////////////////////////////////////

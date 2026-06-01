@@ -128,13 +128,21 @@
 
                             <div v-if="!isBanSectionVisible(stadium)" class="flex flex-row gap-[5px]">
 
-                                <div v-for="slot in [0, 1]" class="relative overflow-hidden h-[72px] w-[50%] border-[#d9ead3] border-[1px] rounded-[10px] px-[8px] flex flex-col">
+                                <div v-for="slot in [0, 1]"
+                                    class="relative overflow-hidden h-[72px] w-[50%] border-[#d9ead3] border-[1px] rounded-[10px] px-[8px] flex flex-col"
+                                    :class="thisSlotBanInfo(stadium, slot) == '' ? '' : 'pick-reveal'"
+                                >
                                     <img v-if="thisSlotBanDetail(stadium, slot).bgUrl !== '' " :src="thisSlotBanDetail(stadium, slot).bgUrl" 
                                         class="absolute inset-0 w-full h-full object-cover z-0" alt="ban background">
+
+                                    <div :class="
+                                        slot == 0 ? 'absolute inset-0 bg-gradient-to-r from-[#600000]/80 to-[#600000]/40 z-0'
+                                        : 'absolute inset-0 bg-gradient-to-l from-[#000090]/80 to-[#000090]/40 z-0'
+                                    "></div>
                                     
                                     <div class="relative z-10">
-                                        <p class="font-rog text-[20px]">{{ thisSlotBanInfo(stadium, slot) }}</p>
-                                        <p class="font-rog text-[13px]"
+                                        <p class="font-rog text-[20px] text-shadow-md">{{ thisSlotBanInfo(stadium, slot) }}</p>
+                                        <p class="font-rog text-[13px] text-shadow-md"
                                         :class="thisSlotBanInfo(stadium, slot) == '' ? 'mt-[5px]' : 'mt-[-5px]'"
                                         >
                                             {{ thisSlotBanInfo(stadium, slot) == '' ? 'banning...' : 'banned' }}
@@ -168,7 +176,10 @@
 
                             <div v-if="!isBanSectionVisible(stadium)" class="flex flex-row gap-[5px]">
 
-                                <div v-for="slot in [0, 1]" class="relative overflow-hidden h-[72px] w-[50%] border-[#d9ead3] border-[1px] rounded-[10px] px-[8px] flex flex-col">
+                                <div v-for="slot in [0, 1]"
+                                    class="relative overflow-hidden h-[72px] w-[50%] border-[#d9ead3] border-[1px] rounded-[10px] px-[8px] flex flex-col"
+                                    :class="thisSlotBanInfo(stadium, slot) == '' ? '' : 'pick-reveal'"
+                                >
                                     <img v-if="thisSlotBanDetail(stadium, slot).bgUrl !== '' " :src="thisSlotBanDetail(stadium, slot).bgUrl" 
                                         class="absolute inset-0 w-full h-full object-cover z-0" alt="ban background">
 

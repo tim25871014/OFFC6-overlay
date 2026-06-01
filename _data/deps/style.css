@@ -88,11 +88,6 @@ body {
 	animation: pick-reveal 0.35s ease-out;
 }
 
-.pick-reveal-content {
-	transform-origin: center;
-	animation: pick-reveal 0.35s ease-out;
-}
-
 .scanline {
 	background-image: linear-gradient(to bottom, transparent 0%, rgba(255, 255, 255, 0.75) 50%, transparent 100%);
 	background-repeat: no-repeat;

@@ -278,9 +278,8 @@ function updateTeamInfo(tourneyMng) {
     // 要去 teams.json 找對應隊伍的 avatar，沒有就用空字串
     let redTeamData = teams.find(team => team.teamName === teamInfo.RedTeamName);
     let blueTeamData = teams.find(team => team.teamName === teamInfo.BlueTeamName);
-
-    teamInfo.RedTeamAvatar = "../_data/img/avatar/" + redTeamData.avatar;
-    teamInfo.BlueTeamAvatar = "../_data/img/avatar/" + blueTeamData.avatar;
+    teamInfo.RedTeamAvatar = "../_data/img/avatar/" + (redTeamData?.avatar || "default.jpg");
+    teamInfo.BlueTeamAvatar = "../_data/img/avatar/" + (blueTeamData?.avatar || "default.jpg");
 }
 
 function updateChat(tourneyMng) {

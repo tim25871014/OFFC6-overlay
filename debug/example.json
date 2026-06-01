@@ -182,8 +182,8 @@
             "name": "ranked"
         },
         "checksum": "d498be6e48b2e4a49824554da9d69228",
-        "id": 358682,
-        "set": 144158,
+        "id": 4460652,
+        "set": 2057681,
         "mode": {
             "number": 0,
             "name": "osu"
@@ -2119,8 +2119,8 @@
                     },
                     "mods": {
                         "checksum": "d751713988987e9331980363e24189ce",
-                        "number": 0,
-                        "name": "",
+                        "number": 17,
+                        "name": "HRNF",
                         "array": [],
                         "rate": 1
                     },

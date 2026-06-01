@@ -4,6 +4,7 @@
     <script src="../_data/deps/vue.global.prod.js"></script>
     <script src="../_data/deps/connection.js"></script>
     <script src="../_data/deps/tailwind.min.js"></script>
+    <script src="../_data/deps/countUp.js"></script>
     <link rel="stylesheet" href="../_data/deps/style.css">
 </head>
 <body>
@@ -86,18 +87,18 @@
         <div id="score-info" class="absolute top-0 w-[70%] left-[50%] transform -translate-x-1/2 flex h-[102px] flex-col">
 
             <div class="absolute top-0 h-[20px] bg-white transition-[width,border-left-width,border-right-width] duration-300 ease-out"
-                :style="[scoreBarStyle(BarWidth, BorderWidth), scoreBorderStyle(BorderWidth)]"
+                :style="scoreBarStyle(BarWidth, BorderWidth)"
             ></div>
     
-            <p class="absolute left-[50%] top-[20px] translate-x-[-100%] font-rog pr-3 text-red-200 text-[25px] font-rog text-shadow-lg"
+            <p id="red-score" class="absolute left-[50%] top-[20px] translate-x-[-100%] font-rog pr-3 text-red-200 text-[25px] font-rog text-shadow-lg"
                 :style="scoreSize(BarWidth)"
                 >{{ formatNumber(RedScore) }}</p>
-            <p class="absolute left-[50%] top-[20px] translate-x-[0%] font-rog pl-3 text-blue-200 text-[25px] font-rog text-shadow-lg"
+            <p id="blue-score" class="absolute left-[50%] top-[20px] translate-x-[0%] font-rog pl-3 text-blue-200 text-[25px] font-rog text-shadow-lg"
                 :style="scoreSize(-BarWidth)">
                 {{ formatNumber(BlueScore) }}
             </p>
 
-            <p class="absolute left-[50%] top-[67px] translate-x-[-50%] font-rog text-white text-[17px]">
+            <p id="score-diff" class="absolute left-[50%] top-[67px] translate-x-[-50%] font-rog text-white text-[17px]">
                 <span v-if="BarWidth > 0" class="absolute right-full pr-1">&lt; </span>
                 {{ formatNumber(Math.abs(RedScore - BlueScore)) }}
                 <span v-if="BarWidth < 0" class="absolute left-full pl-1"> &gt;</span>
@@ -122,9 +123,9 @@
             </div>
 
             <div id="map-display" class="flex flex-1 flex-col px-4 text-white">
-                <p class="mt-[3px] text-[14px] font-rog">{{ Artist }}</p>
-                <p class="-mt-[10px] text-[28px] font-rog">{{ Title }}</p>
-                <p class="-my-1 text-[14px] font-lexend-regular text-gray-200">[{{ Difficulty }}] - by {{ Creator }}</p>
+                <p class="mt-[3px] text-[14px] font-rog max-w-[700px]">{{ Artist }}</p>
+                <p class="-mt-[10px] text-[28px] font-rog truncate max-w-[700px]">{{ Title }}</p>
+                <p class="-my-1 text-[14px] font-lexend-regular text-gray-200 truncate max-w-[700px]">[{{ Difficulty }}] - by {{ Creator }}</p>
                 <div id="map-stats" class="mt-[0px] flex flex-row items-end gap-4 text-white">
                     <div v-for="stat in mapStats" :key="stat.label" class="flex items-end gap-2">
                         <span class="text-[14px] opacity-80">{{ stat.label }}</span>
