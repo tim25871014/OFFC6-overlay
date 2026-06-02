@@ -33,6 +33,7 @@ const picksInfo = createApp({ setup() {
         pickCount: ref(0),
         beatmapMap: ref({}),
         TBPicked: ref(false),
+        TBbgUrl: ref(''),
         getBeatmap
     };
 }}).mount('#picks-group');
@@ -177,6 +178,14 @@ const controlPanel = createApp({ setup() {
 
     const handleTBAction = (event, identifier) => {
         if (event.button !== 0 && event.button !== 2) return;
+
+        // 去 pool 找 identifier 包含 TB 的 map，拿到它的 beatmapset_id
+        const beatmap = Array.isArray(pool?.beatmaps) ? pool.beatmaps.find(b => b.identifier.includes('TB')) : null;
+        if (beatmap?.beatmapset_id) {
+            picksInfo.TBbgUrl = `https://assets.ppy.sh/beatmaps/${beatmap.beatmapset_id}/covers/cover.jpg`;
+        } else {
+            picksInfo.TBbgUrl = '';
+        }
 
         if (event.ctrlKey) return picksInfo.TBPicked = false;
         else return picksInfo.TBPicked = true;
