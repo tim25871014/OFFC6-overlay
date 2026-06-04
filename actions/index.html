@@ -20,49 +20,45 @@
         <div class="absolute top-0 right-0 h-[1080px] w-[14px] bg-[#7ba4af] scanline"></div>
 
         <div id="team-info" class="flex justify-between flex-row w-full mx-10 my-7">
-            <div id="red-info" class="flex flex-row text-left relative">
+            <div v-for="team in [
+                {
+                    id: 'red', row: 'flex-row', textAlign: 'text-left',
+                    avatarClass: 'border-red-950 bg-red-950 rounded-tr-none',
+                    avatar: RedTeamAvatar,
+                    nameGradient: 'bg-gradient-to-r from-red-950 to-transparent',
+                    name: RedTeamName,
+                    hpBarClass: 'red-hp-bar translate-x-[10px] flex items-center',
+                    skew: 'skewX(-10deg)', hpRight: null,
+                    hpPercent: RedTeamHPPercent, hp: RedTeamHP,
+                    nameAlign: ''
+                },
+                {
+                    id: 'blue', row: 'flex-row-reverse', textAlign: 'text-right',
+                    avatarClass: 'border-blue-950 bg-blue-950 rounded-tl-none',
+                    avatar: BlueTeamAvatar,
+                    nameGradient: 'bg-gradient-to-l from-blue-950 to-transparent',
+                    name: BlueTeamName,
+                    hpBarClass: 'blue-hp-bar translate-x-[-10px]',
+                    skew: 'skewX(10deg)', hpRight: '0',
+                    hpPercent: BlueTeamHPPercent, hp: BlueTeamHP,
+                    nameAlign: 'items-end'
+                }
+            ]" :key="`${team.id}-info`" :id="`${team.id}-info`" :class="['flex relative', team.row, team.textAlign]">
                 <div class="flex flex-col gap-1 relative">
-                    <div id="red-avatar" class="w-[140px] h-[105px] border-[3.5px] border-red-950 bg-red-950 rounded-[10px] rounded-tr-none bg-cover bg-center"
-                        :style="{ backgroundImage: `url(${RedTeamAvatar})` }">
+                    <div :id="`${team.id}-avatar`"
+                        :class="['w-[140px] h-[105px] border-[3.5px] rounded-[10px] bg-cover bg-center', team.avatarClass]"
+                        :style="{ backgroundImage: `url(${team.avatar})` }">
                     </div>
                 </div>
-                <div class="flex flex-col gap-1">
-                    <p class="px-4 text-[32px] h-[48px] w-[440px] font-rog bg-gradient-to-r from-red-950 to-transparent">{{ RedTeamName }}</p>
-                    <div class="red-hp-bar relative w-[250px] h-[44px] transform translate-x-[10px] flex items-center">
+                <div :class="['flex flex-col gap-1', team.nameAlign]">
+                    <p :class="['px-4 text-[32px] h-[48px] w-[440px] font-rog', team.nameGradient]">{{ team.name }}</p>
+                    <div :class="['relative w-[250px] h-[44px] transform', team.hpBarClass]">
                         <div class="absolute size-[100%] rounded-[10px] transition-[width] duration-300 ease-out"
-                            :style="{
-                                transform: 'skewX(-10deg)',
-                                width: RedTeamHPPercent + '%',
-                                height: (RedTeamHPPercent < 7) ? '85%' : '100%',
-                                backgroundColor: hpColor(RedTeamHPPercent)
+                            :style="{ transform: team.skew, right: team.hpRight, width: team.hpPercent + '%', height: team.hpPercent < 7 ? '85%' : '100%', backgroundColor: hpColor(team.hpPercent)
                             }"></div>
                         <div class="absolute size-[100%] rounded-[10px] border-[3px] border-white"
-                            :style="{ transform: 'skewX(-10deg)' }"></div>
-                        <p class="text-2xl absolute font-lexend-black text-shadow-lg text-white top-[50%] left-[50%] transform -translate-x-1/2 -translate-y-1/2">{{ RedTeamHP }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div id="blue-info" class="flex flex-row-reverse text-right">
-                <div class="flex flex-col gap-1 relative">
-                    <div id="blue-avatar" class="w-[140px] h-[105px] border-[3.5px] border-blue-950 bg-blue-950 rounded-[10px] rounded-tl-none bg-cover bg-center"
-                        :style="{ backgroundImage: `url(${BlueTeamAvatar})` }">
-                    </div>
-                </div>
-                <div class="flex flex-col gap-1 items-end">
-                    <p class="px-4 text-[32px] h-[48px] w-[440px] font-rog bg-gradient-to-l from-blue-950 to-transparent">{{ BlueTeamName }}</p>
-                    <div class="blue-hp-bar relative w-[250px] h-[44px] transform translate-x-[-10px]">
-                        <div class="absolute size-[100%] rounded-[10px] transition-[width] duration-300 ease-out"
-                            :style="{
-                                transform: 'skewX(10deg)',
-                                right: '0',
-                                width: BlueTeamHPPercent + '%',
-                                height: (BlueTeamHPPercent < 7) ? '85%' : '100%',
-                                backgroundColor: hpColor(BlueTeamHPPercent)
-                            }"></div>
-                        <div class="absolute size-[100%] rounded-[10px] border-[3px] border-white"
-                            :style="{ transform: 'skewX(10deg)' }"></div>
-                        <p class="text-2xl absolute font-lexend-black text-shadow-lg text-white top-[50%] left-[50%] transform -translate-x-1/2 -translate-y-1/2">{{ BlueTeamHP }}</p>
+                            :style="{ transform: team.skew }"></div>
+                        <p class="text-2xl absolute font-lexend-black text-shadow-lg text-white top-[50%] left-[50%] transform -translate-x-1/2 -translate-y-1/2">{{ team.hp }}</p>
                     </div>
                 </div>
             </div>
@@ -72,10 +68,10 @@
     <div id="content" class="h-[720px] w-full flex flex-row">
         <div id="bd-group" class="contents">
             <div id="red-bd" class="order-1 w-[121px] h-full flex flex-col items-center gap-[4px] p-5 relative top-[-45px] left-[10px]">
-                <img v-for="(card, idx) in redBD" :key="`red-bd-${idx}`" :src="card" class="w-[60px] h-[45px] rounded-[7px]" />
+                <img v-for="(card, idx) in redBD" :key="`red-bd-${idx}`" :src="card" class="border-[1px] border-red-950 animate-[pulse-60_3s_ease-in-out_infinite] w-[60px] h-[45px] rounded-[7px]" />
             </div>
             <div id="blue-bd" class="order-5 w-[121px] h-full flex flex-col items-center gap-[4px] p-5 relative top-[-45px] left-[-10px]">
-                <img v-for="(card, idx) in blueBD" :key="`blue-bd-${idx}`" :src="card" class="w-[60px] h-[45px] rounded-[7px]" />
+                <img v-for="(card, idx) in blueBD" :key="`blue-bd-${idx}`" :src="card" class="border-[1px] border-blue-950 animate-[pulse-60_3s_ease-in-out_infinite] w-[60px] h-[45px] rounded-[7px]" />
             </div>
         </div>
         <div id="picks-group" class="contents">
@@ -112,64 +108,17 @@
                 <p class="w-[5%] -rotate-90 transform translate-y-[6px] font-rog">STA</p>
                 <div id="stadium" class="w-[90%] h-full flex flex-row gap-[5px]">
 
-                    <div id="red-stadium" class="w-[50%] h-full flex flex-col gap-[5px] justify-center">
-                        <div v-for="(stadium, idx) in RedStadiums" :key="`red-stadium-${idx}`">
-                            
-                            <div v-if="isBanSectionVisible(stadium)"
-                                class="flex bg-[#253220] border-[#d9ead3] border-[1px] rounded-[10px] items-center gap-2 h-[72px] w-full overflow-hidden"
-                                >
+                    <div v-for="team in [
+                        { id: 'red', stadiums: RedStadiums },
+                        { id: 'blue', stadiums: BlueStadiums }
+                    ]" :key="`${team.id}-stadium`" :id="`${team.id}-stadium`" class="w-[50%] h-full flex flex-col gap-[5px] justify-center">
+                        <div v-for="(stadium, idx) in team.stadiums" :key="`${team.id}-stadium-${idx}`">
 
-                                <img id="stadium-image" v-if="stadium.id !== 'none'" :src="stadium.imageUrl" class="ml-[10px] mr-[3px] h-[60px] w-[80px] rounded-[15px]"></img>
-                                <div class="flex flex-col">
-                                    <div class="flex flex-row">
-                                        <div class="text-gray-100 text-[20px] leading-tight break-words font-rog">{{ stadium.id }}</div>
-                                        <div class="w-max block font-tpsans-bold text-[16px] pl-3 transform translate-y-[2px]">{{ stadium.name }}</div>
-                                    </div>
-                                    <div class="w-max max-w-[190px] text-[13px] leading-tight font-tpsans-light whitespace-normal line-clamp-2 min-h-[30px]">
-                                        {{ stadium.description }}
-                                    </div>
-                                </div>
-
-                            </div>
-
-                            <div v-if="!isBanSectionVisible(stadium)" class="flex flex-row gap-[5px]">
-
-                                <div v-for="slot in [0, 1]"
-                                    class="relative overflow-hidden h-[72px] w-[50%] border-[#d9ead3] border-[1px] rounded-[10px] px-[8px] flex flex-col"
-                                    :class="thisSlotBanInfo(stadium, slot) == '' ? '' : 'pick-reveal'"
-                                >
-                                    <img v-if="thisSlotBanDetail(stadium, slot).bgUrl !== '' " :src="thisSlotBanDetail(stadium, slot).bgUrl" 
-                                        class="absolute inset-0 w-full h-full object-cover z-0" alt="ban background">
-
-                                    <div :class="
-                                        slot == 0 ? 'absolute inset-0 bg-gradient-to-r from-[#600000]/80 to-[#600000]/40 z-0'
-                                        : 'absolute inset-0 bg-gradient-to-l from-[#000090]/80 to-[#000090]/40 z-0'
-                                    "></div>
-                                    
-                                    <div class="relative z-10">
-                                        <p class="font-rog text-[20px] text-shadow-md">{{ thisSlotBanInfo(stadium, slot) }}</p>
-                                        <p class="font-rog text-[13px] text-shadow-md"
-                                        :class="thisSlotBanInfo(stadium, slot) == '' ? 'mt-[5px]' : 'mt-[-5px]'"
-                                        >
-                                            {{ thisSlotBanInfo(stadium, slot) == '' ? 'banning...' : 'banned' }}
-                                        </p>
-                                    </div>
-                                </div>
-                            
-                            </div>
-
-                        </div>
-                    </div>
-
-                    <div id="blue-stadium" class="w-[50%] h-full flex flex-col gap-[5px] justify-center">
-                        <div v-for="(stadium, idx) in BlueStadiums" :key="`blue-stadium-${idx}`">
-                            
                             <div v-if="isBanSectionVisible(stadium)"
                                 class="flex bg-[#253220] border-[#d9ead3] border-[1px] rounded-[10px] items-center gap-2 h-[72px] w-full overflow-hidden"
                             >
-                                <img id="stadium-image" v-if="stadium.id !== 'none'" :src="stadium.imageUrl" class="ml-[10px] mr-[3px] h-[60px] w-[80px] rounded-[15px]"></img>
+                                <img v-if="stadium.id !== 'none'" :src="stadium.imageUrl" class="ml-[10px] mr-[3px] h-[60px] w-[80px] rounded-[15px]"></img>
                                 <div class="flex flex-col">
-
                                     <div class="flex flex-row">
                                         <div class="text-gray-100 text-[20px] leading-tight break-words font-rog">{{ stadium.id }}</div>
                                         <div class="w-max block font-tpsans-bold text-[16px] pl-3 transform translate-y-[2px]">{{ stadium.name }}</div>
@@ -186,14 +135,14 @@
                                     class="relative overflow-hidden h-[72px] w-[50%] border-[#d9ead3] border-[1px] rounded-[10px] px-[8px] flex flex-col"
                                     :class="thisSlotBanInfo(stadium, slot) == '' ? '' : 'pick-reveal'"
                                 >
-                                    <img v-if="thisSlotBanDetail(stadium, slot).bgUrl !== '' " :src="thisSlotBanDetail(stadium, slot).bgUrl" 
+                                    <img v-if="thisSlotBanDetail(stadium, slot).bgUrl !== ''" :src="thisSlotBanDetail(stadium, slot).bgUrl"
                                         class="absolute inset-0 w-full h-full object-cover z-0" alt="ban background">
 
                                     <div :class="
                                         slot == 0 ? 'absolute inset-0 bg-gradient-to-r from-[#600000]/80 to-[#600000]/40 z-0'
                                         : 'absolute inset-0 bg-gradient-to-l from-[#000090]/80 to-[#000090]/40 z-0'
                                     "></div>
-                                    
+
                                     <div class="relative z-10">
                                         <p class="font-rog text-[20px] text-shadow-md">{{ thisSlotBanInfo(stadium, slot) }}</p>
                                         <p class="font-rog text-[13px] text-shadow-md"
@@ -203,7 +152,7 @@
                                         </p>
                                     </div>
                                 </div>
-                            
+
                             </div>
 
                         </div>
@@ -305,7 +254,6 @@
 </div>
 
 <div id="control-panel" class="absolute left-[1950px] flex gap-3 m-4 text-white flex-col">
-    <button class="bg-black size-25" @click="toggleComboMode">Combo Mode: {{ comboMode }}</button>
     <button class="bg-black size-25" @click="toggleChat">Force Chat: {{ chatMode }}</button>
     <div id="mappool" class="text-black font-lexend-regular grid grid-flow-col auto-cols-max grid-rows-10 gap-2">
         <div v-for="(identifier, idx) in mappoolButtons" :key="`mappool-${idx}`">
