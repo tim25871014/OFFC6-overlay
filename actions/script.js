@@ -401,7 +401,7 @@ function updateStadiumInfo() {
 function updateCardInfo() {
     const nextEvents = Array.isArray(gameEvent) ? gameEvent : [];
     
-    const playEvents = nextEvents.filter(item => item?.type == 'play');
+    const playEvents = nextEvents.filter(item => item?.type == 'play' || item?.type == 'round-win');
     
     const currentCount = cardInfo.Cards.length;
     if (playEvents.length < currentCount) cardInfo.Cards = [];
@@ -411,11 +411,14 @@ function updateCardInfo() {
         team: item?.team || '',
         id: item?.card || '',
         name: item?.cardName || '',
-        type: item?.cardType || '',
+        cardType: item?.cardType || '',
+        type: item?.type || '',
         description: (item.cardType == 'M') ? (item?.effect) : (item?.trigger + '，' + item?.effect) || '',
         isAutoHovered: true, // 新卡片預設為展開狀態
         imageUrl: `../_data/img/cards/${item?.card}.png`,
-        avatarUrl: (item.team === 'red' ? teamInfo.RedTeamAvatar : teamInfo.BlueTeamAvatar)
+        avatarUrl: (item.team === 'red' ? teamInfo.RedTeamAvatar : teamInfo.BlueTeamAvatar),
+        dmage: item?.damage || 0,
+        winnerTeam: item?.winnerTeam || ''
     }));
     newCards.reverse();
 

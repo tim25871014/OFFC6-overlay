@@ -40,6 +40,11 @@ body {
 	font-family: 'ROG', 'Maoken', sans-serif;
 }
 
+.font-lexend-exblack {
+	font-family: 'Lexend', sans-serif;
+	font-weight: 900;
+}
+
 .font-lexend-black {
 	font-family: 'Lexend', sans-serif;
 	font-weight: 700;
