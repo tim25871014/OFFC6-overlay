@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+
+<head>
+    <script src="../_data/deps/vue.global.prod.js"></script>
+    <script src="../_data/deps/connection.js"></script>
+    <script src="../_data/deps/tailwind.min.js"></script>
+    <link rel="stylesheet" href="../_data/deps/style.css">
+</head>
+
+<body>
+    <video autoplay loop class="absolute top-0 left-0 -z-10">
+        <source src="../_data/video/intro.mp4" type="video/mp4">
+    </video>
+    <div id="main" class="absolute h-[1080px] w-[1920px] text-white">
+        <div id="header" class="h-[350px] w-full"></div>
+        <div id="content" class="h-[600px] w-full flex gap-15">
+            <div v-for="side in ['red', 'blue']" :key="side"
+                class="h-auto w-[50%] flex flex-col"
+                :class="side === 'red' ? 'items-end' : 'items-start'">
+                <div class="flex mb-10 items-center" :class="side === 'red' ? '' : 'flex-row-reverse'">
+                    <div id="team-name" class="font-rog text-[50px] mx-10">{{ teams[side] }}</div>
+                    <div id="team-avatar"
+                        :style="{ backgroundImage: `url(${avatar[side]})` }"
+                        class="w-[160px] h-[120px] rounded-[10px] bg-cover bg-center"></div>
+                </div>
+                <div class="space-y-1">
+                    <div v-for="(player, idx) in (side === 'red' ? redPlayers : bluePlayers)"
+                        class="flex gap-3 items-center" :class="side === 'red' ? 'flex-row-reverse' : ''">
+                        <img :src="player.avatarUrl" class="size-[50px] rounded-full">
+                        <p class="font-lexend-exblack text-[40px]">{{ player.userName }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script src="./script.js"></script>
+</html>
