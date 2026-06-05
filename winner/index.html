@@ -11,19 +11,9 @@
 <body>
     <div id="main" class="absolute h-[1080px] w-[1920px] text-white">
 
-        <div id="background-img">
-            <video autoplay loop class="absolute top-0 left-0 -z-20">
-                <source src="../_data/video/intro.mp4" type="video/mp4" />
-            </video>
-            <video v-show="winner === 'red'" autoplay loop class="absolute top-0 left-0 -z-10">
-                <source src="../_data/video/winner_red.mp4" type="video/mp4" />
-            </video>
-            <video v-show="winner === 'blue'" autoplay loop class="absolute top-0 left-0 -z-10">
-                <source src="../_data/video/winner_blue.mp4" type="video/mp4" />
-            </video>
-        </div>
-
-        <div id="header" class="flex h-[156px] w-full relative">
+        <video :src="bgUrl" autoplay loop class="absolute top-0 left-0 -z-10"></video>
+        
+        <div id="header" class="flex h-[200px] w-full relative">
             <div id="stage" class="absolute top-[140px] left-[50%] transform -translate-x-1/2 font-rog text-[25px]">
                 {{ Stage }}
             </div>
@@ -37,19 +27,35 @@
                 <p class="font-rog text-[50px] transform translate-y-[-5px]">{{ (winner === 'red') ? teams.red : (winner === 'blue') ? teams.blue : 'None' }}</p>
             </div>
 
-            <div class="w-full h-full flex gap-10 justify-center">
+            <div class="w-full h-full flex gap-16 justify-center">
                 <div class="w-[520px] h-full relative">
-                    <div class="absolute top-0 left-0 w-[35px] h-[35px] rounded-full"
+                    <div class="absolute top-0 left-0 size-[35px] rounded-full animate-pulse"
                         :class="(winner == 'red') ? 'bg-[#ff9d8e]' : (winner === 'blue') ? 'bg-[#96bcff]' : 'bg-[#555555]'"
                     ></div>
-                    <div id="border" class="absolute top-[20px] left-[20px] w-[490px] h-[375px] border-[12px] rounded-[70px]"
-                        :class="(winner == 'red') ? 'border-[#ff9d8e]' : (winner === 'blue') ? 'border-[#96bcff]' : 'border-[#555555]'"
+                    
+                    <div class="absolute top-[14px] left-[14px] w-[502px] h-[387px] border-[12px] rounded-[76px]"
+                        :class="(winner == 'red') ? 'border-[#cc7066]' : (winner === 'blue') ? 'border-[#6688cc]' : 'border-[#888888]'"
+                    ></div>
+                    <svg width="502" height="387" viewBox="-6 -6 502 387"
+                        class="absolute top-[14px] left-[14px]">
+                        <rect x="0" y="0" width="490" height="375" rx="70" ry="70"
+                            fill="none"
+                            stroke-width="12"
+                            stroke-linecap="round"
+                            stroke-dasharray="1610 1610"
+                            :stroke="(winner == 'red') ? '#ff9d8e' : (winner === 'blue') ? '#96bcff' : '#555555'"
+                            style="animation: snake 3s ease-in-out infinite"
+                        />
+                    </svg>
+                    <div class="absolute top-[375px] left-[500px] size-[35px] rounded-full animate-pulse"
+                        :class="(winner == 'red') ? 'bg-[#ff9d8e]' : (winner === 'blue') ? 'bg-[#96bcff]' : 'bg-[#555555]'"
                     ></div>
                     <div id="avatar" class="w-[440px] h-[330px] absolute top-[42px] left-[45px] rounded-[50px] bg-cover bg-center"
                         :style="(winner === 'red') ? { backgroundImage: `url(${avatar.red})` } : { backgroundImage: `url(${avatar.blue})` }">
                     </div>
                 </div>
-                <div id="score" class="w-auto h-full py-[22px] space-y-[3px]">
+
+                <div id="player-list" class="w-auto h-full py-[22px] space-y-[4px]">
                     <div v-for="(player, idx) in (winner === 'red') ? redPlayers : bluePlayers"
                         class="flex flex-row gap-[10px]"
                     >
@@ -63,12 +69,12 @@
 
         </div>
 
-        <div id="footer" class="relative bottom-0 flex h-[204px] w-full px-[20px] items-center justify-center">
-            <h1 class="font-rog text-[100px]">朱芷琳</h1>
-        </div>
-
-
     </div>
+
+    <div id="control-panel" class="absolute left-[1950px] flex gap-3 m-4 text-white flex-col">
+        <button class="bg-black size-25" @click="toggleWinner">Winner: {{ forceWinner }}</button>
+    </div>
+
 </body>
 <script src="./script.js"></script>
 

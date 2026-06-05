@@ -10,8 +10,24 @@ const sceneInfo = createApp({ setup() {
         Stage: ref(''),
         redPlayers: ref([]),
         bluePlayers: ref([]),
+        bgUrl: ref("")
     }
 }}).mount("#main");
+
+const forceInfo = createApp({ setup() {
+    const forceWinner = ref('auto');
+
+    function toggleWinner() {
+        if (forceWinner.value === 'auto') {
+            forceWinner.value = 'red';
+        } else if (forceWinner.value === 'red') {
+            forceWinner.value = 'blue';
+        } else {
+            forceWinner.value = 'auto';
+        }
+    }
+    return { forceWinner, toggleWinner };
+}}).mount("#control-panel");
 
 let wsdata = {}; // for debugging purposes
 ws.onmessage = (event) => {
@@ -21,19 +37,8 @@ ws.onmessage = (event) => {
     let tourneyMng = data.tourney;
 
     updateTeamInfo(tourneyMng);
-    updateWinnerBackground(tourneyMng);
     updatePlayerInfo();
 };
-
-function updateWinnerBackground(tourneyMng) {
-    if (tourneyMng.points.left > tourneyMng.points.right) {
-        sceneInfo.winner = 'red';
-    } else if (tourneyMng.points.right > tourneyMng.points.left) {
-        sceneInfo.winner = 'blue';
-    } else {
-        sceneInfo.winner = 'none';
-    }
-}
 
 function updateTeamInfo(tourneyMng) {
     sceneInfo.teams.red = tourneyMng?.team?.left || "Red Team";
@@ -72,4 +77,39 @@ function updatePlayerInfo() {
 
     sceneInfo.redPlayers = redTeam;
     sceneInfo.bluePlayers = blueTeam;
+}
+
+// 讀取 LocalStorage 中的 game-state，並更新畫面
+let gameStatus = {};
+let gameEvent = [];
+
+setInterval(() => {
+    loadGameState(localStorage.getItem('game-state'));
+    updateWinners();
+}, 1000);
+
+function loadGameState(value) {
+    if (!value) return;
+    const newState = JSON.parse(value);
+    gameStatus = newState.gameStatus || {};
+    gameEvent = newState.gameEvent || [];
+}
+
+function updateWinners() {
+    console.log(gameStatus.teams.red.hp, gameStatus.teams.blue.hp);
+    if (forceInfo.forceWinner !== 'auto') {
+        sceneInfo.winner = forceInfo.forceWinner;
+        sceneInfo.bgUrl = "../_data/video/winner_" + forceInfo.forceWinner + ".mp4";
+        return;
+    }
+    if (gameStatus.teams?.red.hp > gameStatus.teams?.blue.hp) {
+        sceneInfo.winner = 'red';
+        sceneInfo.bgUrl = "../_data/video/winner_red.mp4";
+    } else if (gameStatus.teams?.red.hp < gameStatus.teams?.blue.hp) {
+        sceneInfo.winner = 'blue';
+        sceneInfo.bgUrl = "../_data/video/winner_blue.mp4";
+    } else {
+        sceneInfo.winner = 'none';
+        sceneInfo.bgUrl = "../_data/video/winner_red.mp4";
+    }
 }

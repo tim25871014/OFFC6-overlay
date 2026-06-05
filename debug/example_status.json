@@ -9,7 +9,7 @@
         "red": {
             "team": "red",
             "teamName": "瘋狂 Red Team",
-            "hp": 1200,
+            "hp": 6400,
             "handLimit": 5,
             "totalAtk": 1800,
             "totalAtkBonus": 300,
