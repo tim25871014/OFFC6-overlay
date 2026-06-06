@@ -7,7 +7,8 @@ const sceneInfo = createApp({ setup() {
         teams: ref({blue: "", red: ""}),
         avatar: ref({blue: "", red: ""}),
         redPlayers: ref([]),
-        bluePlayers: ref([])
+        bluePlayers: ref([]),
+        lobbyReady: ref(false)
     }
 }}).mount("#main");
 
@@ -20,11 +21,20 @@ ws.onmessage = (event) => {
 
     updateTeamInfo(tourneyMng);
     updatePlayerInfo();
+    checkLobbyReady();
 };
 
+function checkLobbyReady() {
+    // 如果 teams 裡找的到 sceneInfo.teams.red 和 sceneInfo.teams.blue 的隊伍名稱，就把 lobbyReady 設為 true，否則 false
+    const redTeamExists = teams.some(t => t.teamName === sceneInfo.teams.red);
+    const blueTeamExists = teams.some(t => t.teamName === sceneInfo.teams.blue);
+    sceneInfo.lobbyReady = redTeamExists && blueTeamExists;
+    console.log("Lobby Ready:", sceneInfo.lobbyReady);
+}
+
 function updateTeamInfo(tourneyMng) {
-    sceneInfo.teams.red = tourneyMng?.team?.left || "Red Team";
-    sceneInfo.teams.blue = tourneyMng?.team?.right || "Blue Team";
+    sceneInfo.teams.red = tourneyMng?.team?.left || "";
+    sceneInfo.teams.blue = tourneyMng?.team?.right || "";
     sceneInfo.avatar.red = "../_data/img/avatar/" + (teams.find(team => team.teamName === sceneInfo.teams.red)?.avatar || "default.jpg");
     sceneInfo.avatar.blue = "../_data/img/avatar/" + (teams.find(team => team.teamName === sceneInfo.teams.blue)?.avatar || "default.jpg");
 }
