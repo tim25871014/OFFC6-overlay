@@ -1,0 +1,4 @@
+{
+  "tosuSocketUrl": "ws://localhost:24050/websocket/v2",
+  "bridgeBaseUrl": "http://localhost:8383"
+}

@@ -1,0 +1,99 @@
+/* 設定字體 */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@900&display=swap');
+
+/* 隱藏整個頁面的預設背景 */
+body {
+    background-color: transparent !important;
+}
+
+/* 設定整個列表容器為橫向排列) */
+ul[class*="Voice_voiceStates_"] {
+    display: flex !important;
+    flex-direction: row !important; 
+    flex-wrap: wrap !important;     
+    gap: 3px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* 鎖定卡片父容器的高度 */
+li[class*="Voice_voiceState_"] {
+    position: relative !important;
+    transform: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    
+    /* 卡片尺寸設定 */
+    width: 115px !important;
+    height: 90px !important;
+    
+    /* 卡片外框設定 */
+    border: 3px solid #5e5e5e !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+    background-color: #5e5e5e !important;
+    box-sizing: border-box !important;
+}
+
+/* 設定頭像高度，並確保它填滿卡片上半部 */
+img[class*="Voice_avatar_"] {
+    width: 100% !important;
+    height: 68px !important;
+    border-radius: 0 !important;
+    border: none !important;
+    object-fit: cover !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    filter: brightness(0.9);     
+    transition: all 0.2s ease-in-out;
+}
+
+/* 講話時的特效 */
+img[class*="Voice_avatarSpeaking_"] {
+    filter: brightness(1.1);
+    transform: scale(1.05) !important;
+}
+
+/* 名字外框 */
+div[class*="Voice_user_"] {
+    width: 100% !important;
+    height: calc(100% - 68px) !important;
+    background-color: #5e5e5e !important;
+    padding: 0 !important;
+    border-radius: 0 !important;          
+    margin: 0 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+}
+
+/* 名字文字 */
+span[class*="Voice_name_"] {
+    color: #ffffff !important;           
+    font-family: 'Orbitron', sans-serif !important; 
+    font-size: 11px !important;
+    font-weight: 900 !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important; 
+    letter-spacing: 0px !important;      
+    background: transparent !important;  
+    text-shadow: 0px 2px 2px rgba(0, 0, 0, 0.5) !important;
+    padding: 0 !important;
+}
+
+/* 隱藏靜音與關麥克風的人 */
+li[class*="Voice_voiceState_"].self_mute,
+li[class*="Voice_voiceState_"].self_deaf {
+    display: none !important;
+}
+
+/* 黑名單 */
+[data-userid=""] {
+    display: none;
+}

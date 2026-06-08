@@ -1,0 +1,121 @@
+@import 'tailwindcss';
+
+body {
+    /* 禁用整個頁面的文字選取 */
+    -webkit-user-select: none; /* Safari */
+    -moz-user-select: none;    /* Firefox */
+    -ms-user-select: none;     /* IE10+/Edge */
+    user-select: none;         /* 標準語法 */
+}
+
+@font-face {
+	font-family: 'ROG';
+	src: url('./fonts/ROGFONTS-REGULAR.OTF');
+}
+
+@font-face {
+	font-family: 'Lexend';
+	src: url('./fonts/LexendDeca-VariableFont_wght.ttf');
+}
+
+@font-face {
+	font-family: 'TPSans-Bold';
+	src: url('./fonts/TaipeiSansTCBeta-Bold.ttf');
+}
+
+@font-face {
+	font-family: 'TPSans-Regular';
+	src: url('./fonts/TaipeiSansTCBeta-Regular.ttf');
+}
+
+@font-face {
+	font-family: 'TPSans-Light';
+	src: url('./fonts/TaipeiSansTCBeta-Light.ttf');
+}
+
+@font-face {
+	font-family: 'Maoken';
+	src: url('./fonts/MaokenAssortedSans-TC.ttf');
+}
+
+.font-rog {
+	font-family: 'ROG', 'Maoken', sans-serif;
+}
+
+.font-lexend-exblack {
+	font-family: 'Lexend', sans-serif;
+	font-weight: 900;
+}
+
+.font-lexend-black {
+	font-family: 'Lexend', sans-serif;
+	font-weight: 700;
+}
+
+.font-lexend-regular {
+	font-family: 'Lexend', sans-serif;
+	font-weight: 400;
+}
+
+.font-tpsans-bold {
+	font-family: 'TPSans-Bold', sans-serif;
+}
+
+.font-tpsans-regular {
+	font-family: 'TPSans-Regular', sans-serif;
+}
+
+.font-tpsans-light {
+	font-family: 'TPSans-Light', sans-serif;
+}
+
+.font-maoken {
+	font-family: 'Maoken', sans-serif;
+}
+
+@keyframes scanline {
+	0% { background-size: 100% 0%; }
+	50% { background-size: 100% 100%; }
+	100% { background-size: 100% 0%; }
+}
+
+@keyframes pick-reveal {
+	0% {
+		opacity: 0;
+		transform: scaleX(0);
+	}
+	100% {
+		opacity: 1;
+		transform: scaleX(1);
+	}
+}
+
+.pick-reveal {
+	transform-origin: center;
+	animation: pick-reveal 0.35s ease-out;
+}
+
+.scanline {
+	background-image: linear-gradient(to bottom, transparent 0%, rgba(255, 255, 255, 0.75) 50%, transparent 100%);
+	background-repeat: no-repeat;
+	background-position: top;
+	animation: scanline 5s linear infinite;
+}
+
+@keyframes gradient {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+@keyframes pulse-60 {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+@keyframes snake {
+	0%   { stroke-dashoffset: 1610; opacity: 1; }
+	20%  { stroke-dashoffset: 0; opacity: 0; }
+	60%  { stroke-dashoffset: 0; opacity: 1; }
+	80%  { stroke-dashoffset: -1610; opacity: 0; }
+	100% { stroke-dashoffset: -1610; opacity: 0; }
+}
