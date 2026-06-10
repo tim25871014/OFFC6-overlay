@@ -7,5 +7,5 @@ import { loadConfig } from './lib/config'
 
 // Resolve endpoint URLs (tosu socket / bridge) before mounting so every view sees them.
 loadConfig().finally(() => {
-  createApp(App).use(router).mount('#app')
+	createApp(App).use(router).mount('#app')
 })

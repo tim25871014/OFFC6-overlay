@@ -4,5 +4,7 @@ defineEmits(['click'])
 </script>
 
 <template>
-  <button class="bg-black size-25" @click="$emit('click')"><slot /></button>
+    <button class="bg-black size-25" @click="$emit('click')">
+        <slot />
+    </button>
 </template>
