@@ -1,5 +1,6 @@
 <script setup>
-import { reactive, ref, computed, onMounted, onUnmounted } from 'vue'
+import { reactive, ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import CountUp from '../lib/countUp'
 import BackgroundVideo from '../components/BackgroundVideo.vue'
 import TeamHeader from '../components/TeamHeader.vue'
 import ChatPanel from '../components/ChatPanel.vue'
@@ -10,7 +11,6 @@ import { useGameState } from '../composables/useGameState'
 import { useChat } from '../composables/useChat'
 import { dataPath } from '../lib/dataPath'
 import {
-    formatNumber,
     formatTime,
     convertAR,
     convertCS,
@@ -235,6 +235,44 @@ function updateScoreData(tourneyMng) {
     scoreInfo.BorderWidth = 2 * getBarWidthDelta(barWidth)
 }
 
+// --- animated score counters (countUp.js owns the innerHTML of #red-score / #blue-score) ---
+const redScoreEl = ref(null)
+const blueScoreEl = ref(null)
+let redScoreCounter = null
+let blueScoreCounter = null
+// font-rog digits are not equal width, so wrap each digit in a fixed-width span
+// (centered) to fake tabular numerals while keeping the font's glyphs.
+// A leading "1" gets a narrower cell so it doesn't look gap-y next to its neighbour.
+const formatScore = (num) => {
+    let isLeading = true
+    return Math.round(num)
+        .toString()
+        .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+        .replace(/\d/g, (d) => {
+            const cls = isLeading && d === '1' ? 'num-digit num-digit-one' : 'num-digit'
+            isLeading = false
+            return `<span class="${cls}">${d}</span>`
+        })
+}
+const countUpOptions = { formattingFn: formatScore }
+
+const diffEl = ref(null)
+let diffCounter = null
+const scoreDiff = () => Math.abs(scoreInfo.RedScore - scoreInfo.BlueScore)
+
+onMounted(() => {
+    redScoreCounter = new CountUp(redScoreEl.value, 0, scoreInfo.RedScore, 0, 0.3, countUpOptions)
+    redScoreCounter.start()
+    blueScoreCounter = new CountUp(blueScoreEl.value, 0, scoreInfo.BlueScore, 0, 0.3, countUpOptions)
+    blueScoreCounter.start()
+    diffCounter = new CountUp(diffEl.value, 0, scoreDiff(), 0, 0.3, countUpOptions)
+    diffCounter.start()
+})
+
+watch(() => scoreInfo.RedScore, (value) => redScoreCounter?.update(value))
+watch(() => scoreInfo.BlueScore, (value) => blueScoreCounter?.update(value))
+watch(scoreDiff, (value) => diffCounter?.update(value))
+
 // --- team data ---
 function updateTeamInfo(tourneyMng) {
     teamInfo.RedTeamName = tourneyMng?.team?.left || 'Red Team'
@@ -310,21 +348,21 @@ useGameState(updateRefInfo)
                 <div id="score-bar" class="absolute top-0 h-[20px] bg-white transition-[width] duration-500 ease-out"
                     :style="scoreBarStyle(scoreInfo.BarWidth)"></div>
 
-                <p id="red-score"
-                    class="absolute left-[50%] top-[20px] translate-x-[-100%] font-rog pr-3 text-red-200 text-[25px] font-rog text-shadow-lg"
+                <p id="red-score" ref="redScoreEl"
+                    class="absolute left-[50%] top-[20px] translate-x-[-100%] font-rog pr-3 text-red-200 text-[25px] text-shadow-lg"
                     :style="scoreSize(scoreInfo.BarWidth)">
-                    {{ formatNumber(scoreInfo.RedScore) }}
+                    0
                 </p>
-                <p id="blue-score"
-                    class="absolute left-[50%] top-[20px] translate-x-[0%] font-rog pl-3 text-blue-200 text-[25px] font-rog text-shadow-lg"
+                <p id="blue-score" ref="blueScoreEl"
+                    class="absolute left-[50%] top-[20px] translate-x-[0%] font-rog pl-3 text-blue-200 text-[25px] text-shadow-lg"
                     :style="scoreSize(-scoreInfo.BarWidth)">
-                    {{ formatNumber(scoreInfo.BlueScore) }}
+                    0
                 </p>
 
                 <p id="score-diff"
-                    class="absolute left-[50%] top-[67px] translate-x-[-50%] font-rog text-white text-[17px]">
+                    class="absolute left-[50%] top-[67px] translate-x-[-50%] font-rog text-white text-[20px]">
                     <span v-if="scoreInfo.BarWidth > 0" class="absolute right-full pr-1">&lt; </span>
-                    {{ formatNumber(Math.abs(scoreInfo.RedScore - scoreInfo.BlueScore)) }}
+                    <span ref="diffEl">0</span>
                     <span v-if="scoreInfo.BarWidth < 0" class="absolute left-full pl-1"> &gt;</span>
                 </p>
             </div>

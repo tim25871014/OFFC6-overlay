@@ -73,6 +73,18 @@ body {
 	font-family: 'Maoken', sans-serif;
 }
 
+/* Fake tabular numerals: force every digit into an equal-width, centered cell. */
+.num-digit {
+	display: inline-block;
+	width: 1ch;
+	text-align: center;
+}
+
+/* A leading "1" is visually narrow, so give it a tighter cell. */
+.num-digit-one {
+	width: 0.7ch;
+}
+
 @keyframes scanline {
 	0% { background-size: 100% 0%; }
 	50% { background-size: 100% 100%; }

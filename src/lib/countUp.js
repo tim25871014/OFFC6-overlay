@@ -1,18 +1,9 @@
-
-(function(root, factory) {
-  if (typeof define === 'function' && define.amd) {
-    define(factory);
-  } else if (typeof exports === 'object') {
-    module.exports = factory(require, exports, module);
-  } else {
-    root.CountUp = factory();
-  }
-}(this, function(require, exports, module) {
-
 /*
 
 	countUp.js
 	by @inorganik
+
+	(UMD wrapper replaced with an ES module export so it imports cleanly under Vite.)
 
 */
 
@@ -256,6 +247,4 @@ var CountUp = function(target, startVal, endVal, decimals, duration, options) {
 	if (self.initialize()) self.printValue(self.startVal);
 };
 
-return CountUp;
-
-}));
+export default CountUp;

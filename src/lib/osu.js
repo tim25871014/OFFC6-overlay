@@ -86,6 +86,6 @@ export function reversedScoreBarStyle(barWidth, borderWidth = 0) {
 }
 
 export function scoreSize(value) {
-    if (value >= 0) return { fontSize: '38px', transform: 'translateY(-4px)' }
-    else return { fontSize: '25px', transform: 'translateY(2px)' }
+    if (value >= 0) return { fontSize: '38px', transform: 'translateY(-2px)' }
+    else return { fontSize: '25px', transform: 'translateY(4px)' }
 }
