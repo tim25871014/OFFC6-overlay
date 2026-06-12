@@ -1,8 +1,9 @@
-<script>
+<script setup>
 // Bridge control console: polls the scoreboard bridge server (URL from
 // _data/config/endpoints.json, or the mock from `npm run mock:bridge`) and mirrors
 // the latest state into localStorage['game-state'], which the gameplay/actions/winner
 // overlays read.
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { getConfig } from '../lib/config'
 
 const STORAGE_INSTANCE_KEY = 'offc6-score-selected-instance'
@@ -10,434 +11,451 @@ const INSTANCE_REFRESH_MS = 5000
 const SCOREBOARD_POLL_MS = 2000
 const MAX_EVENT_LOG = 200
 
-export default {
-    data() {
-        return {
-            bridgeBaseUrl: getConfig().bridgeBaseUrl,
-            selectedInstanceId: String(window.localStorage.getItem(STORAGE_INSTANCE_KEY) || '').trim(),
-            instanceList: [],
-            instanceListTimer: null,
-            scoreboardTimer: null,
-            syncTimer: null,
-            pollingWorker: null,
-            useWorkerPolling: false,
-            lastEventSeq: 0,
-            lastSnapshotSignature: '',
-            isBridgeConnected: false,
-            gameStatus: {},
-            gameEvent: [],
-            connectionStatus: '等待選擇可連線的 index.html。',
-            snapshotStatus: 'game_status 尚未同步',
-            eventStatus: 'game_event 0 筆',
-            statusDot: 'warn',
-        }
-    },
-    computed: {
-        statusDotClass() {
-            if (this.statusDot === 'ok') return 'bg-emerald-400'
-            if (this.statusDot === 'err') return 'bg-rose-400'
-            return 'bg-amber-400'
-        },
-        gameStatusText() {
-            return JSON.stringify(this.gameStatus || {}, null, 4)
-        },
-        gameEventText() {
-            const reversed = [...this.gameEvent].reverse()
-            return JSON.stringify(reversed, null, 4)
-        },
-    },
-    mounted() {
-        this.loadInstances().catch(() => { })
-        this.startInstanceRefresh()
-        this.initPollingWorker()
-        if (this.selectedInstanceId) {
-            this.pollScoreboard(true).catch(() => { })
-            this.startPolling()
-        }
-        // Mirror state to localStorage once per second (matches the original render.js).
-        this.syncTimer = window.setInterval(this.syncState, 1000)
-    },
-    beforeUnmount() {
-        if (this.scoreboardTimer) {
-            window.clearInterval(this.scoreboardTimer)
-        }
-        if (this.instanceListTimer) {
-            window.clearInterval(this.instanceListTimer)
-        }
-        if (this.syncTimer) {
-            window.clearInterval(this.syncTimer)
-        }
-        if (this.pollingWorker) {
-            this.pollingWorker.terminate()
-            this.pollingWorker = null
-        }
-    },
-    methods: {
-        syncState() {
-            const state = { gameStatus: this.gameStatus, gameEvent: this.gameEvent }
-            try {
-                window.localStorage.setItem('game-state', JSON.stringify(state))
-            } catch {
-                /* ignore quota/serialisation errors */
-            }
-        },
-        apiUrl(path) {
-            return `${this.bridgeBaseUrl}${path}`
-        },
-        async requestJson(path, options = {}) {
-            const response = await fetch(this.apiUrl(path), {
-                ...options,
-                credentials: 'omit',
-            })
+const bridgeBaseUrl = getConfig().bridgeBaseUrl
 
-            if (!response.ok) {
-                const bodyText = await response.text().catch(() => '')
-                const error = new Error(bodyText || `HTTP ${response.status}`)
-                error.status = response.status
-                throw error
-            }
+// --- reactive state (bound in the template) ---
+const selectedInstanceId = ref(String(window.localStorage.getItem(STORAGE_INSTANCE_KEY) || '').trim())
+const instanceList = ref([])
+const gameStatus = ref({})
+const gameEvent = ref([])
+const connectionStatus = ref('等待選擇可連線的 index.html。')
+const snapshotStatus = ref('game_status 尚未同步')
+const eventStatus = ref('game_event 0 筆')
+const statusDot = ref('warn')
 
-            return response.json()
-        },
-        shallowStatusSignature(nextStatus) {
-            try {
-                return JSON.stringify(nextStatus || {})
-            } catch {
-                return String(Date.now())
-            }
-        },
-        setStatusDot(mode) {
-            this.statusDot = mode === 'ok' ? 'ok' : mode === 'err' ? 'err' : 'warn'
-        },
-        initPollingWorker() {
-            if (!window.Worker) {
-                this.useWorkerPolling = false
-                return
-            }
+// --- non-reactive internals (only touched in JS, never rendered) ---
+let instanceListTimer = null
+let scoreboardTimer = null
+let syncTimer = null
+let pollingWorker = null
+let useWorkerPolling = false
+let lastEventSeq = 0
+let lastSnapshotSignature = ''
+let isBridgeConnected = false
 
-            try {
-                this.pollingWorker = new Worker(new URL('../workers/bridge-worker.js', import.meta.url), {
-                    type: 'module',
-                })
-                this.useWorkerPolling = true
-            } catch {
-                this.pollingWorker = null
-                this.useWorkerPolling = false
-                return
-            }
+const statusDotClass = computed(() => {
+    if (statusDot.value === 'ok') return 'bg-emerald-400'
+    if (statusDot.value === 'err') return 'bg-rose-400'
+    return 'bg-amber-400'
+})
+const gameStatusText = computed(() => JSON.stringify(gameStatus.value || {}, null, 4))
+const gameEventText = computed(() => JSON.stringify([...gameEvent.value].reverse(), null, 4))
 
-            this.pollingWorker.onmessage = (event) => {
-                this.handleWorkerMessage(event.data)
-            }
-            this.pollingWorker.onerror = (error) => {
-                this.useWorkerPolling = false
-                this.pollingWorker?.terminate()
-                this.pollingWorker = null
-                this.connectionStatus = `背景同步失敗：${error?.message || 'worker error'}`
-                this.setStatusDot('err')
-            }
-
-            if (this.selectedInstanceId) {
-                this.configureWorkerPolling(this.selectedInstanceId, true)
-            }
-        },
-        configureWorkerPolling(instanceId, reset = false) {
-            if (!this.pollingWorker) {
-                return
-            }
-            this.pollingWorker.postMessage({
-                type: 'configure',
-                baseUrl: this.bridgeBaseUrl,
-                instanceId: String(instanceId || '').trim(),
-                pollMs: SCOREBOARD_POLL_MS,
-                reset,
-            })
-        },
-        requestWorkerPoll(force = false) {
-            if (!this.pollingWorker) {
-                return
-            }
-            this.pollingWorker.postMessage({ type: 'pollOnce', force })
-        },
-        stopWorkerPolling() {
-            if (!this.pollingWorker) {
-                return
-            }
-            this.pollingWorker.postMessage({ type: 'stop' })
-        },
-        handleWorkerMessage(payload) {
-            if (!payload || typeof payload !== 'object') {
-                return
-            }
-
-            console.log('[worker]', payload.type, payload?.events?.length ?? '', payload.force ? 'force' : '')
-
-            if (payload.type === 'snapshot') {
-                this.setGameStatus(payload.snapshot)
-                return
-            }
-
-            if (payload.type === 'events') {
-                if (Array.isArray(payload.events) && payload.events.length) {
-                    this.setGameEvents(payload.events, Boolean(payload.force))
-                }
-                return
-            }
-
-            if (payload.type === 'connected') {
-                this.isBridgeConnected = true
-                this.connectionStatus = `已同步：${payload.instanceId}`
-                this.setStatusDot('ok')
-                return
-            }
-
-            if (payload.type === 'gone') {
-                this.isBridgeConnected = false
-                this.selectedInstanceId = ''
-                window.localStorage.removeItem(STORAGE_INSTANCE_KEY)
-                this.connectionStatus = '目標對局已離線，已停止同步並自動刷新清單。'
-                this.setStatusDot('warn')
-                this.loadInstances().catch(() => { })
-                return
-            }
-
-            if (payload.type === 'error') {
-                this.isBridgeConnected = false
-                this.connectionStatus = `同步失敗：${payload.message}`
-                this.setStatusDot('err')
-            }
-        },
-        updateStatusText() {
-            this.snapshotStatus = this.gameStatus?.updatedAt
-                ? `game_status 已更新：${new Date(this.gameStatus.updatedAt).toLocaleString('zh-TW', { hour12: false })}`
-                : 'game_status 已同步'
-            this.connectionStatus = this.selectedInstanceId
-                ? `已連線：${this.selectedInstanceId}`
-                : '等待選擇可連線的 index.html。'
-        },
-        updateEventText() {
-            this.eventStatus = `game_event ${this.gameEvent.length} 筆`
-            this.syncState()
-        },
-        setGameStatus(nextStatus) {
-            const signature = this.shallowStatusSignature(nextStatus)
-            if (signature === this.lastSnapshotSignature) {
-                return false
-            }
-            this.lastSnapshotSignature = signature
-            this.gameStatus = nextStatus && typeof nextStatus === 'object' ? nextStatus : {}
-            this.updateStatusText()
-            this.syncState()
-            return true
-        },
-        appendGameEvent(eventItem) {
-            if (!eventItem || typeof eventItem !== 'object') {
-                return false
-            }
-
-            this.gameEvent = [...this.gameEvent, eventItem].slice(-MAX_EVENT_LOG)
-            this.updateEventText()
-            return true
-        },
-        setGameEvents(eventItems, force = false) {
-            const list = Array.isArray(eventItems) ? eventItems : []
-            if (!list.length) {
-                return false
-            }
-
-            if (force) {
-                // Merge/replace by seq so modified old events are applied
-                const existingBySeq = new Map()
-                for (const ev of this.gameEvent) {
-                    const s = Number(ev?.seq)
-                    if (Number.isFinite(s)) existingBySeq.set(s, ev)
-                }
-
-                for (const item of list) {
-                    const s = Number(item?.seq)
-                    if (!Number.isFinite(s)) continue
-                    existingBySeq.set(s, item)
-                    this.lastEventSeq = Math.max(this.lastEventSeq, s)
-                }
-
-                // Rebuild ordered array
-                const merged = Array.from(existingBySeq.entries())
-                    .sort((a, b) => a[0] - b[0])
-                    .map(([, v]) => v)
-                    .slice(-MAX_EVENT_LOG)
-
-                this.gameEvent = merged
-                this.updateEventText()
-                console.log('[events] merged, total=', this.gameEvent.length)
-                return true
-            }
-
-            let changed = false
-            for (const item of list) {
-                const seq = Number(item?.seq)
-                if (Number.isFinite(seq) && seq > this.lastEventSeq) {
-                    this.appendGameEvent(item)
-                    this.lastEventSeq = seq
-                    changed = true
-                }
-            }
-            if (changed) console.log('[events] appended, lastSeq=', this.lastEventSeq)
-            return changed
-        },
-        formatInstanceLabel(instance) {
-            const redName = instance?.teamNames?.red || '紅隊'
-            const blueName = instance?.teamNames?.blue || '藍隊'
-            return `${redName} / ${blueName} (${instance.instanceId.slice(0, 8)})`
-        },
-        async loadInstances() {
-            try {
-                const payload = await this.requestJson('/api/scoreboard/instances')
-                this.instanceList = Array.isArray(payload.instances) ? payload.instances : []
-
-                if (this.selectedInstanceId) {
-                    const stillExists = this.instanceList.some(
-                        (instance) => String(instance?.instanceId || '') === this.selectedInstanceId,
-                    )
-                    if (!stillExists) {
-                        this.selectedInstanceId = ''
-                        window.localStorage.removeItem(STORAGE_INSTANCE_KEY)
-                        this.isBridgeConnected = false
-                        if (this.useWorkerPolling) {
-                            this.stopWorkerPolling()
-                        }
-                    }
-                }
-
-                if (!this.selectedInstanceId && this.instanceList.length === 1) {
-                    await this.selectInstance(this.instanceList[0].instanceId)
-                }
-
-                if (!this.selectedInstanceId) {
-                    this.connectionStatus = this.instanceList.length
-                        ? '請從選單選擇要同步的 index.html。'
-                        : '尚未偵測到任何 index.html。'
-                    this.isBridgeConnected = false
-                    if (this.useWorkerPolling) {
-                        this.stopWorkerPolling()
-                    }
-                }
-
-                this.setStatusDot('warn')
-            } catch (error) {
-                this.isBridgeConnected = false
-                this.connectionStatus = `無法連線到 bridge server：${error.message}`
-                this.setStatusDot('err')
-            }
-        },
-        async selectInstance(instanceId) {
-            this.selectedInstanceId = String(instanceId || '').trim()
-            window.localStorage.setItem(STORAGE_INSTANCE_KEY, this.selectedInstanceId)
-            this.lastEventSeq = 0
-            this.gameEvent = []
-            this.isBridgeConnected = false
-            this.updateEventText()
-            this.updateStatusText()
-            if (this.useWorkerPolling) {
-                this.configureWorkerPolling(this.selectedInstanceId, true)
-            }
-            await this.pollScoreboard(true)
-            this.startPolling()
-        },
-        async pollScoreboard(force = false) {
-            if (!this.selectedInstanceId) {
-                return
-            }
-
-            if (this.useWorkerPolling) {
-                this.requestWorkerPoll(force)
-                return
-            }
-
-            try {
-                const payload = await this.requestJson(
-                    `/api/scoreboard/state?instanceId=${encodeURIComponent(this.selectedInstanceId)}&sinceSeq=${force ? 0 : this.lastEventSeq}`,
-                )
-                if (payload && typeof payload.snapshot === 'object' && payload.snapshot) {
-                    this.setGameStatus(payload.snapshot)
-                }
-
-                if (Array.isArray(payload?.events) && payload.events.length) {
-                    this.setGameEvents(payload.events)
-                    const latestSeq = payload.events.reduce(
-                        (max, eventItem) => Math.max(max, Number(eventItem.seq) || 0),
-                        this.lastEventSeq,
-                    )
-                    this.lastEventSeq = Math.max(this.lastEventSeq, latestSeq)
-                }
-
-                this.isBridgeConnected = true
-                this.connectionStatus = `已同步：${this.selectedInstanceId}`
-                this.setStatusDot('ok')
-            } catch (error) {
-                if (Number(error?.status) === 404 || String(error?.message || '').includes('404')) {
-                    this.isBridgeConnected = false
-                    this.selectedInstanceId = ''
-                    window.localStorage.removeItem(STORAGE_INSTANCE_KEY)
-                    this.connectionStatus = '目標對局已離線，已停止同步並自動刷新清單。'
-                    this.setStatusDot('warn')
-                    await this.loadInstances()
-                    return
-                }
-
-                this.isBridgeConnected = false
-                this.connectionStatus = `同步失敗：${error.message}`
-                this.setStatusDot('err')
-            }
-        },
-        startPolling() {
-            if (this.useWorkerPolling) {
-                this.stopTimer()
-                this.configureWorkerPolling(this.selectedInstanceId, false)
-                return
-            }
-            if (this.scoreboardTimer) {
-                window.clearInterval(this.scoreboardTimer)
-            }
-            this.scoreboardTimer = window.setInterval(() => {
-                this.pollScoreboard(true).catch(() => { })
-            }, SCOREBOARD_POLL_MS)
-        },
-        stopTimer() {
-            if (this.scoreboardTimer) {
-                window.clearInterval(this.scoreboardTimer)
-                this.scoreboardTimer = null
-            }
-        },
-        startInstanceRefresh() {
-            if (this.instanceListTimer) {
-                window.clearInterval(this.instanceListTimer)
-            }
-            this.instanceListTimer = window.setInterval(() => {
-                if (!this.selectedInstanceId || !this.isBridgeConnected) {
-                    this.loadInstances().catch(() => { })
-                }
-            }, INSTANCE_REFRESH_MS)
-        },
-        async refreshInstances() {
-            await this.loadInstances()
-            if (this.selectedInstanceId) {
-                await this.pollScoreboard(true)
-            }
-        },
-        async reconnect() {
-            await this.loadInstances()
-            if (this.selectedInstanceId) {
-                await this.pollScoreboard(true)
-            }
-        },
-        async handleInstanceChange() {
-            if (!this.selectedInstanceId) {
-                return
-            }
-            await this.selectInstance(this.selectedInstanceId)
-        },
-    },
+function syncState() {
+    const state = { gameStatus: gameStatus.value, gameEvent: gameEvent.value }
+    try {
+        window.localStorage.setItem('game-state', JSON.stringify(state))
+    } catch {
+        /* ignore quota/serialisation errors */
+    }
 }
+
+function apiUrl(path) {
+    return `${bridgeBaseUrl}${path}`
+}
+
+async function requestJson(path, options = {}) {
+    const response = await fetch(apiUrl(path), {
+        ...options,
+        credentials: 'omit',
+    })
+
+    if (!response.ok) {
+        const bodyText = await response.text().catch(() => '')
+        const error = new Error(bodyText || `HTTP ${response.status}`)
+        error.status = response.status
+        throw error
+    }
+
+    return response.json()
+}
+
+function shallowStatusSignature(nextStatus) {
+    try {
+        return JSON.stringify(nextStatus || {})
+    } catch {
+        return String(Date.now())
+    }
+}
+
+function setStatusDot(mode) {
+    statusDot.value = mode === 'ok' ? 'ok' : mode === 'err' ? 'err' : 'warn'
+}
+
+function initPollingWorker() {
+    if (!window.Worker) {
+        useWorkerPolling = false
+        return
+    }
+
+    try {
+        pollingWorker = new Worker(new URL('../workers/bridge-worker.js', import.meta.url), {
+            type: 'module',
+        })
+        useWorkerPolling = true
+    } catch {
+        pollingWorker = null
+        useWorkerPolling = false
+        return
+    }
+
+    pollingWorker.onmessage = (event) => {
+        handleWorkerMessage(event.data)
+    }
+    pollingWorker.onerror = (error) => {
+        useWorkerPolling = false
+        pollingWorker?.terminate()
+        pollingWorker = null
+        connectionStatus.value = `背景同步失敗：${error?.message || 'worker error'}`
+        setStatusDot('err')
+    }
+
+    if (selectedInstanceId.value) {
+        configureWorkerPolling(selectedInstanceId.value, true)
+    }
+}
+
+function configureWorkerPolling(instanceId, reset = false) {
+    if (!pollingWorker) {
+        return
+    }
+    pollingWorker.postMessage({
+        type: 'configure',
+        baseUrl: bridgeBaseUrl,
+        instanceId: String(instanceId || '').trim(),
+        pollMs: SCOREBOARD_POLL_MS,
+        reset,
+    })
+}
+
+function requestWorkerPoll(force = false) {
+    if (!pollingWorker) {
+        return
+    }
+    pollingWorker.postMessage({ type: 'pollOnce', force })
+}
+
+function stopWorkerPolling() {
+    if (!pollingWorker) {
+        return
+    }
+    pollingWorker.postMessage({ type: 'stop' })
+}
+
+function handleWorkerMessage(payload) {
+    if (!payload || typeof payload !== 'object') {
+        return
+    }
+
+    console.log('[worker]', payload.type, payload?.events?.length ?? '', payload.force ? 'force' : '')
+
+    if (payload.type === 'snapshot') {
+        setGameStatus(payload.snapshot)
+        return
+    }
+
+    if (payload.type === 'events') {
+        if (Array.isArray(payload.events) && payload.events.length) {
+            setGameEvents(payload.events, Boolean(payload.force))
+        }
+        return
+    }
+
+    if (payload.type === 'connected') {
+        isBridgeConnected = true
+        connectionStatus.value = `已同步：${payload.instanceId}`
+        setStatusDot('ok')
+        return
+    }
+
+    if (payload.type === 'gone') {
+        isBridgeConnected = false
+        selectedInstanceId.value = ''
+        window.localStorage.removeItem(STORAGE_INSTANCE_KEY)
+        connectionStatus.value = '目標對局已離線，已停止同步並自動刷新清單。'
+        setStatusDot('warn')
+        loadInstances().catch(() => { })
+        return
+    }
+
+    if (payload.type === 'error') {
+        isBridgeConnected = false
+        connectionStatus.value = `同步失敗：${payload.message}`
+        setStatusDot('err')
+    }
+}
+
+function updateStatusText() {
+    snapshotStatus.value = gameStatus.value?.updatedAt
+        ? `game_status 已更新：${new Date(gameStatus.value.updatedAt).toLocaleString('zh-TW', { hour12: false })}`
+        : 'game_status 已同步'
+    connectionStatus.value = selectedInstanceId.value
+        ? `已連線：${selectedInstanceId.value}`
+        : '等待選擇可連線的 index.html。'
+}
+
+function updateEventText() {
+    eventStatus.value = `game_event ${gameEvent.value.length} 筆`
+    syncState()
+}
+
+function setGameStatus(nextStatus) {
+    const signature = shallowStatusSignature(nextStatus)
+    if (signature === lastSnapshotSignature) {
+        return false
+    }
+    lastSnapshotSignature = signature
+    gameStatus.value = nextStatus && typeof nextStatus === 'object' ? nextStatus : {}
+    updateStatusText()
+    syncState()
+    return true
+}
+
+function appendGameEvent(eventItem) {
+    if (!eventItem || typeof eventItem !== 'object') {
+        return false
+    }
+
+    gameEvent.value = [...gameEvent.value, eventItem].slice(-MAX_EVENT_LOG)
+    updateEventText()
+    return true
+}
+
+function setGameEvents(eventItems, force = false) {
+    const list = Array.isArray(eventItems) ? eventItems : []
+    if (!list.length) {
+        return false
+    }
+
+    if (force) {
+        // Merge/replace by seq so modified old events are applied
+        const existingBySeq = new Map()
+        for (const ev of gameEvent.value) {
+            const s = Number(ev?.seq)
+            if (Number.isFinite(s)) existingBySeq.set(s, ev)
+        }
+
+        for (const item of list) {
+            const s = Number(item?.seq)
+            if (!Number.isFinite(s)) continue
+            existingBySeq.set(s, item)
+            lastEventSeq = Math.max(lastEventSeq, s)
+        }
+
+        // Rebuild ordered array
+        const merged = Array.from(existingBySeq.entries())
+            .sort((a, b) => a[0] - b[0])
+            .map(([, v]) => v)
+            .slice(-MAX_EVENT_LOG)
+
+        gameEvent.value = merged
+        updateEventText()
+        console.log('[events] merged, total=', gameEvent.value.length)
+        return true
+    }
+
+    let changed = false
+    for (const item of list) {
+        const seq = Number(item?.seq)
+        if (Number.isFinite(seq) && seq > lastEventSeq) {
+            appendGameEvent(item)
+            lastEventSeq = seq
+            changed = true
+        }
+    }
+    if (changed) console.log('[events] appended, lastSeq=', lastEventSeq)
+    return changed
+}
+
+function formatInstanceLabel(instance) {
+    const redName = instance?.teamNames?.red || '紅隊'
+    const blueName = instance?.teamNames?.blue || '藍隊'
+    return `${redName} / ${blueName} (${instance.instanceId.slice(0, 8)})`
+}
+
+async function loadInstances() {
+    try {
+        const payload = await requestJson('/api/scoreboard/instances')
+        instanceList.value = Array.isArray(payload.instances) ? payload.instances : []
+
+        if (selectedInstanceId.value) {
+            const stillExists = instanceList.value.some(
+                (instance) => String(instance?.instanceId || '') === selectedInstanceId.value,
+            )
+            if (!stillExists) {
+                selectedInstanceId.value = ''
+                window.localStorage.removeItem(STORAGE_INSTANCE_KEY)
+                isBridgeConnected = false
+                if (useWorkerPolling) {
+                    stopWorkerPolling()
+                }
+            }
+        }
+
+        if (!selectedInstanceId.value && instanceList.value.length === 1) {
+            await selectInstance(instanceList.value[0].instanceId)
+        }
+
+        if (!selectedInstanceId.value) {
+            connectionStatus.value = instanceList.value.length
+                ? '請從選單選擇要同步的 index.html。'
+                : '尚未偵測到任何 index.html。'
+            isBridgeConnected = false
+            if (useWorkerPolling) {
+                stopWorkerPolling()
+            }
+        }
+
+        setStatusDot('warn')
+    } catch (error) {
+        isBridgeConnected = false
+        connectionStatus.value = `無法連線到 bridge server：${error.message}`
+        setStatusDot('err')
+    }
+}
+
+async function selectInstance(instanceId) {
+    selectedInstanceId.value = String(instanceId || '').trim()
+    window.localStorage.setItem(STORAGE_INSTANCE_KEY, selectedInstanceId.value)
+    lastEventSeq = 0
+    gameEvent.value = []
+    isBridgeConnected = false
+    updateEventText()
+    updateStatusText()
+    if (useWorkerPolling) {
+        configureWorkerPolling(selectedInstanceId.value, true)
+    }
+    await pollScoreboard(true)
+    startPolling()
+}
+
+async function pollScoreboard(force = false) {
+    if (!selectedInstanceId.value) {
+        return
+    }
+
+    if (useWorkerPolling) {
+        requestWorkerPoll(force)
+        return
+    }
+
+    try {
+        const payload = await requestJson(
+            `/api/scoreboard/state?instanceId=${encodeURIComponent(selectedInstanceId.value)}&sinceSeq=${force ? 0 : lastEventSeq}`,
+        )
+        if (payload && typeof payload.snapshot === 'object' && payload.snapshot) {
+            setGameStatus(payload.snapshot)
+        }
+
+        if (Array.isArray(payload?.events) && payload.events.length) {
+            setGameEvents(payload.events)
+            const latestSeq = payload.events.reduce(
+                (max, eventItem) => Math.max(max, Number(eventItem.seq) || 0),
+                lastEventSeq,
+            )
+            lastEventSeq = Math.max(lastEventSeq, latestSeq)
+        }
+
+        isBridgeConnected = true
+        connectionStatus.value = `已同步：${selectedInstanceId.value}`
+        setStatusDot('ok')
+    } catch (error) {
+        if (Number(error?.status) === 404 || String(error?.message || '').includes('404')) {
+            isBridgeConnected = false
+            selectedInstanceId.value = ''
+            window.localStorage.removeItem(STORAGE_INSTANCE_KEY)
+            connectionStatus.value = '目標對局已離線，已停止同步並自動刷新清單。'
+            setStatusDot('warn')
+            await loadInstances()
+            return
+        }
+
+        isBridgeConnected = false
+        connectionStatus.value = `同步失敗：${error.message}`
+        setStatusDot('err')
+    }
+}
+
+function startPolling() {
+    if (useWorkerPolling) {
+        stopTimer()
+        configureWorkerPolling(selectedInstanceId.value, false)
+        return
+    }
+    if (scoreboardTimer) {
+        window.clearInterval(scoreboardTimer)
+    }
+    scoreboardTimer = window.setInterval(() => {
+        pollScoreboard(true).catch(() => { })
+    }, SCOREBOARD_POLL_MS)
+}
+
+function stopTimer() {
+    if (scoreboardTimer) {
+        window.clearInterval(scoreboardTimer)
+        scoreboardTimer = null
+    }
+}
+
+function startInstanceRefresh() {
+    if (instanceListTimer) {
+        window.clearInterval(instanceListTimer)
+    }
+    instanceListTimer = window.setInterval(() => {
+        if (!selectedInstanceId.value || !isBridgeConnected) {
+            loadInstances().catch(() => { })
+        }
+    }, INSTANCE_REFRESH_MS)
+}
+
+async function refreshInstances() {
+    await loadInstances()
+    if (selectedInstanceId.value) {
+        await pollScoreboard(true)
+    }
+}
+
+async function reconnect() {
+    await loadInstances()
+    if (selectedInstanceId.value) {
+        await pollScoreboard(true)
+    }
+}
+
+async function handleInstanceChange() {
+    if (!selectedInstanceId.value) {
+        return
+    }
+    await selectInstance(selectedInstanceId.value)
+}
+
+onMounted(() => {
+    loadInstances().catch(() => { })
+    startInstanceRefresh()
+    initPollingWorker()
+    if (selectedInstanceId.value) {
+        pollScoreboard(true).catch(() => { })
+        startPolling()
+    }
+    // Mirror state to localStorage once per second (matches the original render.js).
+    syncTimer = window.setInterval(syncState, 1000)
+})
+
+onBeforeUnmount(() => {
+    if (scoreboardTimer) {
+        window.clearInterval(scoreboardTimer)
+    }
+    if (instanceListTimer) {
+        window.clearInterval(instanceListTimer)
+    }
+    if (syncTimer) {
+        window.clearInterval(syncTimer)
+    }
+    if (pollingWorker) {
+        pollingWorker.terminate()
+        pollingWorker = null
+    }
+})
 </script>
 
 <template>
