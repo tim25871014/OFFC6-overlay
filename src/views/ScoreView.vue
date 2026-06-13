@@ -51,7 +51,9 @@ function syncState() {
 }
 
 function apiUrl(path) {
-    return `${bridgeBaseUrl}${path}`
+    // Tolerate a trailing slash in bridgeBaseUrl so we never emit `//api/...`,
+    // which the bridge server treats as an unregistered route (Cannot GET).
+    return `${bridgeBaseUrl.replace(/\/+$/, '')}${path}`
 }
 
 async function requestJson(path, options = {}) {
