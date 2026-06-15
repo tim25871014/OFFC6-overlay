@@ -303,8 +303,8 @@ function updateRefInfo(state) {
     const blueTeam = state.gameStatus?.teams?.blue || {}
     teamInfo.RedTeamHP = redTeam.hp || 0
     teamInfo.BlueTeamHP = blueTeam.hp || 0
-    teamInfo.RedTeamATK = redTeam.totalAtk || 0
-    teamInfo.BlueTeamATK = blueTeam.totalAtk || 0
+    teamInfo.RedTeamATK = redTeam.totalAtk + redTeam.totalAtkBonus || 0
+    teamInfo.BlueTeamATK = blueTeam.totalAtk + blueTeam.totalAtkBonus || 0
     teamInfo.MaxHP = Math.max(teamInfo.MaxHP, teamInfo.RedTeamHP, teamInfo.BlueTeamHP)
     teamInfo.RedTeamHPPercent = teamInfo.MaxHP > 0 ? (teamInfo.RedTeamHP / teamInfo.MaxHP) * 100 : 0
     teamInfo.BlueTeamHPPercent = teamInfo.MaxHP > 0 ? (teamInfo.BlueTeamHP / teamInfo.MaxHP) * 100 : 0

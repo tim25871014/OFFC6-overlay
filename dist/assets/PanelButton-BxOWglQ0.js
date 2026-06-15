@@ -1,0 +1,1 @@
+import{b as e,d as t,v as n}from"./index-B69WnDV5.js";var r={__name:`PanelButton`,emits:[`click`],setup(r){return(r,i)=>(n(),t(`button`,{class:`bg-black size-25`,onClick:i[0]||=e=>r.$emit(`click`)},[e(r.$slots,`default`)]))}};export{r as t};
