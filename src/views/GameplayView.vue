@@ -188,7 +188,11 @@ function getBarWidthDelta(currentWidth) {
         }
     }
 
-    return currentWidth - pastValue
+    let retVal = currentWidth - pastValue;
+    if (retVal > 50) retVal = 50
+    else if (retVal < -50) retVal = -50
+
+    return retVal
 }
 
 function mapScoreWidth(x) {
@@ -213,6 +217,9 @@ function updateScoreData(tourneyMng) {
         blueTeamScore = 0
 
     if (!controlPanel.comboMode) {
+        redTeamScore = tourneyMng.totalScore.left || 0;
+        blueTeamScore = tourneyMng.totalScore.right || 0;
+        /*
         redTeamScore = redTeam.reduce((sum, client) => {
             let score = client.play.score || 0
             if (client.play.mods?.name?.includes('EZ')) score = Math.round(score * 1.8)
@@ -223,6 +230,7 @@ function updateScoreData(tourneyMng) {
             if (client.play.mods?.name?.includes('EZ')) score = Math.round(score * 1.8)
             return sum + score
         }, 0)
+        */
     } else {
         redTeamScore = redTeam.reduce((sum, client) => sum + client.play.combo.max, 0)
         blueTeamScore = blueTeam.reduce((sum, client) => sum + client.play.combo.max, 0)
