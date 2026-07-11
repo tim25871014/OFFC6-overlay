@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref, computed } from 'vue'
+import { ref, computed } from 'vue'
 import BackgroundVideo from '../components/BackgroundVideo.vue'
 import PlayerList from '../components/PlayerList.vue'
 import MarqueeText from '../components/MarqueeText.vue'
@@ -7,62 +7,11 @@ import StrainGraph from '../components/StrainGraph.vue'
 import { useTosuSocket } from '../composables/useTosuSocket'
 import { useConfig } from '../composables/useConfig'
 import { useAdRotation } from '../composables/useAdRotation'
+import { useMapInfo } from '../composables/useMapInfo'
 import { dataPath } from '../lib/dataPath'
-
-import {
-    formatTime,
-    convertAR,
-    convertCS,
-    convertOD,
-    convertBPM,
-    convertedTime,
-} from '../lib/osu'
 
 const { currentStage, pool, teamAvatar } = useConfig()
 const showcaseVideo = dataPath('video/showcase.mp4')
-
-const mapInfo = reactive({
-    AR: 0, CS: 0, OD: 0, SR: 0, BPM: 0, LEN: 0,
-    Title: '', Artist: '', Creator: '', Difficulty: '',
-    mapId: 0, setId: 0, BGUrl: '', MapIdentifier: '',
-})
-
-// --- map data ---
-function updateMapData(beatmapMng) {
-    const beatmap = pool.value?.beatmaps?.find((b) => b.beatmap_id === beatmapMng.id)
-    mapInfo.MapIdentifier = beatmap ? beatmap.identifier : 'EX'
-    const mapMods = beatmap ? beatmap.mods : ''
-
-    if (mapInfo.MapIdentifier == 'EX') {
-        mapInfo.AR = beatmapMng.stats.ar.original.toFixed(1)
-        mapInfo.CS = beatmapMng.stats.cs.original.toFixed(1)
-        mapInfo.OD = beatmapMng.stats.od.original.toFixed(1)
-        mapInfo.SR = beatmapMng.stats.stars.total.toFixed(2)
-        mapInfo.BPM = beatmapMng.stats.bpm.common.toFixed(0)
-        mapInfo.LEN = formatTime(beatmapMng.time.lastObject - beatmapMng.time.firstObject)
-    } else {
-        mapInfo.AR = convertAR(beatmapMng.stats.ar.original, mapMods).toFixed(1)
-        mapInfo.CS = convertCS(beatmapMng.stats.cs.original, mapMods).toFixed(1)
-        mapInfo.OD = convertOD(beatmapMng.stats.od.original, mapMods).toFixed(1)
-        mapInfo.SR = beatmap.sr.toFixed(2)
-        mapInfo.BPM = beatmap.bpm.toFixed(0)
-        mapInfo.LEN = formatTime(
-            convertedTime(beatmapMng.time.lastObject - beatmapMng.time.firstObject, mapMods),
-        )
-    }
-
-    mapInfo.Title = beatmapMng.title
-    mapInfo.Artist = beatmapMng.artist
-    mapInfo.Creator = beatmapMng.mapper
-    mapInfo.Difficulty = beatmapMng.version
-
-    if (beatmapMng.id != mapInfo.mapId) {
-        mapInfo.mapId = beatmapMng.id
-        mapInfo.setId = beatmapMng.set
-        mapInfo.BGUrl = `https://assets.ppy.sh/beatmaps/${beatmapMng.set}/covers/cover.jpg`
-        updateStrainGraph()
-    }
-}
 
 // --- strain graph ---
 let latestGraph = null
@@ -72,10 +21,15 @@ function updateStrainGraph() {
     strainGraph.value = latestGraph
 }
 
+// --- map data (shared with GameplayView) ---
+const { mapInfo, updateMapData, findPoolBeatmap } = useMapInfo(pool, {
+    onMapChange: updateStrainGraph,
+})
+
 useTosuSocket((data) => {
     latestGraph = data.performance?.graph || null
     liveTime.value = data.beatmap?.time?.live || 0
-    updateMapData(data.beatmap)
+    updateMapData(data.beatmap, data.folders, data.files)
 })
 
 const mapStats = computed(() => [
@@ -94,9 +48,16 @@ const modColors = {
     FM: '#74dbe0', HP: '#a3e07d', TB: '#e084e0', OP: '#c9c9c9',
 }
 const poolBeatmaps = computed(() => pool.value?.beatmaps || [])
-const currentIndex = computed(() =>
-    poolBeatmaps.value.findIndex((b) => b.beatmap_id === mapInfo.mapId),
-)
+const currentIndex = computed(() => {
+    // reuse the shared id-then-metadata matcher, then locate its position
+    const bm = findPoolBeatmap({
+        id: mapInfo.mapId,
+        title: mapInfo.Title,
+        artist: mapInfo.Artist,
+        version: mapInfo.Difficulty,
+    })
+    return bm ? poolBeatmaps.value.indexOf(bm) : -1
+})
 const pointerLeft = computed(() => {
     const n = poolBeatmaps.value.length
     if (!n || currentIndex.value < 0) return '0%'

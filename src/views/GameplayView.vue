@@ -10,14 +10,9 @@ import { useConfig } from '../composables/useConfig'
 import { useGameState } from '../composables/useGameState'
 import { useChat } from '../composables/useChat'
 import { useAdRotation } from '../composables/useAdRotation'
+import { useMapInfo } from '../composables/useMapInfo'
 import { dataPath } from '../lib/dataPath'
 import {
-    formatTime,
-    convertAR,
-    convertCS,
-    convertOD,
-    convertBPM,
-    convertedTime,
     scoreBarStyle,
     extendedScoreBarStyle,
     reversedScoreBarStyle,
@@ -29,11 +24,8 @@ const { chat, update: updateChatMessages } = useChat()
 
 const gameplayVideo = dataPath('video/gameplay.mp4')
 
-const mapInfo = reactive({
-    AR: 0, CS: 0, OD: 0, SR: 0, BPM: 0, LEN: 0,
-    Title: '', Artist: '', Creator: '', Difficulty: '',
-    mapId: 0, setId: 0, BGUrl: '', MapIdentifier: '',
-})
+// --- map data (shared with ShowcaseView) ---
+const { mapInfo, updateMapData } = useMapInfo(pool)
 
 const mapStats = computed(() => [
     { label: 'AR', value: mapInfo.AR },
@@ -60,42 +52,6 @@ const toggleChat = () => { controlPanel.chatMode = !controlPanel.chatMode }
 
 // --- ad rotation ---
 const { currentAdUrl, adOpacity, showAd } = useAdRotation()
-
-// --- map data ---
-function updateMapData(beatmapMng) {
-    const beatmap = pool.value?.beatmaps?.find((b) => b.beatmap_id === beatmapMng.id)
-    mapInfo.MapIdentifier = beatmap ? beatmap.identifier : 'EX'
-    const mapMods = beatmap ? beatmap.mods : ''
-
-    if (mapInfo.MapIdentifier == 'EX') {
-        mapInfo.AR = beatmapMng.stats.ar.original.toFixed(1)
-        mapInfo.CS = beatmapMng.stats.cs.original.toFixed(1)
-        mapInfo.OD = beatmapMng.stats.od.original.toFixed(1)
-        mapInfo.SR = beatmapMng.stats.stars.total.toFixed(2)
-        mapInfo.BPM = beatmapMng.stats.bpm.common.toFixed(0)
-        mapInfo.LEN = formatTime(beatmapMng.time.lastObject - beatmapMng.time.firstObject)
-    } else {
-        mapInfo.AR = convertAR(beatmapMng.stats.ar.original, mapMods).toFixed(1)
-        mapInfo.CS = convertCS(beatmapMng.stats.cs.original, mapMods).toFixed(1)
-        mapInfo.OD = convertOD(beatmapMng.stats.od.original, mapMods).toFixed(1)
-        mapInfo.SR = beatmap.sr.toFixed(2)
-        mapInfo.BPM = beatmap.bpm.toFixed(0)
-        mapInfo.LEN = formatTime(
-            convertedTime(beatmapMng.time.lastObject - beatmapMng.time.firstObject, mapMods),
-        )
-    }
-
-    mapInfo.Title = beatmapMng.title
-    mapInfo.Artist = beatmapMng.artist
-    mapInfo.Creator = beatmapMng.mapper
-    mapInfo.Difficulty = beatmapMng.version
-
-    if (beatmapMng.id != mapInfo.mapId) {
-        mapInfo.mapId = beatmapMng.id
-        mapInfo.setId = beatmapMng.set
-        mapInfo.BGUrl = `https://assets.ppy.sh/beatmaps/${beatmapMng.set}/covers/cover.jpg`
-    }
-}
 
 // --- score data ---
 const barWidthHistory = []
@@ -156,9 +112,9 @@ function updateScoreData(tourneyMng) {
         blueTeamScore = 0
 
     if (!controlPanel.comboMode) {
-        redTeamScore = tourneyMng.totalScore.left || 0;
-        blueTeamScore = tourneyMng.totalScore.right || 0;
-        /*
+        // redTeamScore = tourneyMng.totalScore.left || 0;
+        // blueTeamScore = tourneyMng.totalScore.right || 0;
+        
         redTeamScore = redTeam.reduce((sum, client) => {
             let score = client.play.score || 0
             if (client.play.mods?.name?.includes('EZ')) score = Math.round(score * 1.8)
@@ -169,7 +125,7 @@ function updateScoreData(tourneyMng) {
             if (client.play.mods?.name?.includes('EZ')) score = Math.round(score * 1.8)
             return sum + score
         }, 0)
-        */
+        
     } else {
         redTeamScore = redTeam.reduce((sum, client) => sum + client.play.combo.max, 0)
         blueTeamScore = blueTeam.reduce((sum, client) => sum + client.play.combo.max, 0)
@@ -230,7 +186,7 @@ function updateTeamInfo(tourneyMng) {
 }
 
 useTosuSocket((data) => {
-    updateMapData(data.beatmap)
+    updateMapData(data.beatmap, data.folders, data.files)
     updateScoreData(data.tourney)
     updateTeamInfo(data.tourney)
     updateChatMessages(data.tourney, controlPanel.chatMode)
