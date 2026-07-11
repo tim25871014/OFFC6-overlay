@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { reactive, ref, computed, onMounted, watch } from 'vue'
 import CountUp from '../lib/countUp'
 import BackgroundVideo from '../components/BackgroundVideo.vue'
 import TeamHeader from '../components/TeamHeader.vue'
@@ -9,6 +9,7 @@ import { useTosuSocket } from '../composables/useTosuSocket'
 import { useConfig } from '../composables/useConfig'
 import { useGameState } from '../composables/useGameState'
 import { useChat } from '../composables/useChat'
+import { useAdRotation } from '../composables/useAdRotation'
 import { dataPath } from '../lib/dataPath'
 import {
     formatTime,
@@ -58,69 +59,7 @@ const toggleComboMode = () => { controlPanel.comboMode = !controlPanel.comboMode
 const toggleChat = () => { controlPanel.chatMode = !controlPanel.chatMode }
 
 // --- ad rotation ---
-const adImages = ref([])
-const adIndex = ref(0)
-const currentAdUrl = ref('')
-const adOpacity = ref(1)
-const showAd = computed(() => adImages.value.length > 0)
-let adTimer = null
-let fadeTimer = null
-
-const setAd = (index) => {
-    adIndex.value = index
-    currentAdUrl.value = adImages.value[index] || ''
-    adOpacity.value = 1
-}
-const clearTimers = () => {
-    if (adTimer) clearInterval(adTimer)
-    if (fadeTimer) clearTimeout(fadeTimer)
-    adTimer = null
-    fadeTimer = null
-}
-const swapAd = () => {
-    if (!adImages.value.length) return setAd(0)
-    adOpacity.value = 0
-    if (fadeTimer) clearTimeout(fadeTimer)
-    fadeTimer = setTimeout(() => {
-        setAd((adIndex.value + 1) % adImages.value.length)
-    }, 250)
-}
-const startRotation = () => {
-    clearTimers()
-    if (!adImages.value.length) return setAd(0)
-    setAd(adIndex.value)
-    if (adImages.value.length > 1) adTimer = setInterval(swapAd, 20000)
-}
-const preloadAds = (files) => {
-    if (!Array.isArray(files) || files.length === 0) return Promise.resolve([])
-    const urls = files.map((file) => dataPath('img/ad/' + file))
-    return Promise.all(
-        urls.map(
-            (url) =>
-                new Promise((resolve) => {
-                    const img = new Image()
-                    img.onload = () => resolve(url)
-                    img.onerror = () => resolve(null)
-                    img.src = url
-                }),
-        ),
-    ).then((results) => results.filter(Boolean))
-}
-
-onMounted(() => {
-    fetch(dataPath('img/ad/ad-list.json'))
-        .then((res) => res.json())
-        .then(preloadAds)
-        .then((validUrls) => {
-            adImages.value = validUrls
-            startRotation()
-        })
-        .catch(() => {
-            adImages.value = []
-            startRotation()
-        })
-})
-onUnmounted(() => clearTimers())
+const { currentAdUrl, adOpacity, showAd } = useAdRotation()
 
 // --- map data ---
 function updateMapData(beatmapMng) {
@@ -140,7 +79,7 @@ function updateMapData(beatmapMng) {
         mapInfo.CS = convertCS(beatmapMng.stats.cs.original, mapMods).toFixed(1)
         mapInfo.OD = convertOD(beatmapMng.stats.od.original, mapMods).toFixed(1)
         mapInfo.SR = beatmap.sr.toFixed(2)
-        mapInfo.BPM = convertBPM(beatmapMng.stats.bpm.common, mapMods).toFixed(0)
+        mapInfo.BPM = beatmap.bpm.toFixed(0)
         mapInfo.LEN = formatTime(
             convertedTime(beatmapMng.time.lastObject - beatmapMng.time.firstObject, mapMods),
         )

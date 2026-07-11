@@ -5,8 +5,10 @@ const overlays = [
     { name: 'intro', label: 'Intro' },
     { name: 'actions', label: 'Actions' },
     { name: 'gameplay', label: 'Gameplay' },
-    { name: 'score', label: 'Score（控制台）' },
     { name: 'winner', label: 'Winner' },
+    { name: 'showcase', label: 'Showcase' },
+    { name: 'score', label: 'Score（控制台）' },
+    
 ]
 </script>
 

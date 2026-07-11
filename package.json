@@ -11,6 +11,7 @@
     "mock:bridge": "node debug/mock-server.cjs"
   },
   "dependencies": {
+    "chart.js": "^4.5.1",
     "vue": "^3.5.32",
     "vue-router": "^5.1.0"
   },

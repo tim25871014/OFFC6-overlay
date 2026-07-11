@@ -9,6 +9,7 @@ const routes = [
 	{ path: '/gameplay', name: 'gameplay', component: () => import('../views/GameplayView.vue') },
 	{ path: '/score', name: 'score', component: () => import('../views/ScoreView.vue') },
 	{ path: '/winner', name: 'winner', component: () => import('../views/WinnerView.vue') },
+	{ path: '/showcase', name: 'showcase', component: () => import('../views/ShowcaseView.vue') },
 ]
 
 export default createRouter({

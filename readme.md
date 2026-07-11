@@ -8,8 +8,9 @@
 | Intro | `#/intro` |
 | Actions（ban/pick/card） | `#/actions` |
 | Gameplay | `#/gameplay` |
-| Score（裁判控制台） | `#/score` |
 | Winner | `#/winner` |
+| Showcase | `#/showcase` |
+| Score（控制台） | `#/score` |
 
 開啟根目錄 `/`（或 `#/`）會看到一個列出所有 overlay 連結的啟動頁面。
 
