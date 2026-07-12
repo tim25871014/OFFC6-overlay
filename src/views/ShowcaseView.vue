@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
 import BackgroundVideo from '../components/BackgroundVideo.vue'
-import PlayerList from '../components/PlayerList.vue'
 import MarqueeText from '../components/MarqueeText.vue'
 import StrainGraph from '../components/StrainGraph.vue'
 import { useTosuSocket } from '../composables/useTosuSocket'
@@ -26,9 +25,14 @@ const { mapInfo, updateMapData, findPoolBeatmap } = useMapInfo(pool, {
     onMapChange: updateStrainGraph,
 })
 
+// header line: the player's name while a replay/play is loaded, "Now Playing" otherwise
+const playerName = ref('')
+const npLabel = computed(() => (playerName.value ? `Player: ${playerName.value}` : 'Now Playing'))
+
 useTosuSocket((data) => {
     latestGraph = data.performance?.graph || null
     liveTime.value = data.beatmap?.time?.live || 0
+    playerName.value = data.play?.playerName || ''
     updateMapData(data.beatmap, data.folders, data.files)
 })
 
@@ -92,8 +96,8 @@ const { currentAdUrl, adOpacity } = useAdRotation()
                 </div>
             </div>
             <div id="right" class="w-[444px] h-full absolute right-[18px] flex items-center flex-col">
-                <div id="np" class="w-full h-[36px] bg-linear-to-r from-[#ededed]/20 to-[#ededed]/0 flex items-center px-3">
-                    <p class="font-rog text-[20px] -mt-[3px]"> Now Playing </p>
+                <div id="np" class="w-full h-[42px] bg-linear-to-r from-[#ededed]/20 to-[#ededed]/0 flex flex-col justify-center px-3">
+                    <p class="font-lexend-black text-[23px] truncate mx-1">{{ npLabel }}</p>
                 </div>
                 <div id="map-info" class="w-full h-[250px] relative overflow-hidden">
                     <img id="map-bg" class="absolute top-0 h-full w-full object-cover object-center -z-1"
@@ -102,9 +106,9 @@ const { currentAdUrl, adOpacity } = useAdRotation()
                     <div class="relative h-full flex flex-col justify-between px-4 py-2 font-rog leading-none">
                         <p class="text-[85px] drop-shadow-2xl -mt-1"> {{ mapInfo.MapIdentifier }} </p>
                         <div>
-                            <MarqueeText class="text-[28px]" :text="mapInfo.Artist" :scale-x="0.8" />
-                            <MarqueeText class="text-[45px]" :text="mapInfo.Title" :scale-x="0.8" />
-                            <MarqueeText class="font-lexend-regular text-[20px] mt-1"
+                            <MarqueeText class="text-[28px] -mb-1" :text="mapInfo.Artist" :scale-x="0.8" />
+                            <MarqueeText class="text-[43px] mb-2" :text="mapInfo.Title" :scale-x="0.85" />
+                            <MarqueeText class="font-lexend-regular text-[20px] my-1"
                                 :text="`[${mapInfo.Difficulty}] - by ${mapInfo.Creator}`" />
                         </div>
                     </div>
@@ -120,11 +124,11 @@ const { currentAdUrl, adOpacity } = useAdRotation()
                     </div>
                 </div>
                 <div id="map-stats"
-                    class="w-[420px] h-[330px] bg-black/50 font-lexend-black text-white text-[35px] px-5 flex flex-col justify-center">
+                    class="w-[420px] h-[330px] bg-black/50 font-lexend-black text-white text-[33px] px-5 flex flex-col justify-center rounded-[10px]">
                     <div v-for="stat in mapStats" :key="stat.label"
-                        class="flex items-center justify-between h-[52px]">
+                        class="flex items-center justify-between h-[48px]">
                         <div class="flex items-center gap-3">
-                            <span class="w-[6px] h-[35px] bg-[#7ba4af] rounded-full"></span>
+                            <span class="w-[6px] h-[33px] bg-[#7ba4af] rounded-full"></span>
                             <p> {{ stat.label }} </p>
                         </div>
                         <p> {{ stat.value }} </p>

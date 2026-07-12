@@ -13,6 +13,13 @@ export function tosuBgUrl(folders, files) {
     return `${base}/files/beatmap/${path}`
 }
 
+// Prefer the osu! CDN cover for submitted maps; only fall back to tosu's local
+// file server when there is no set id (unsubmitted maps report set === -1).
+export function beatmapBgUrl(setId, folders, files) {
+    if (setId > 0) return `https://assets.ppy.sh/beatmaps/${setId}/covers/cover.jpg`
+    return tosuBgUrl(folders, files)
+}
+
 // Shared beatmap / now-playing state for the gameplay & showcase overlays.
 // `pool` is the current pool computed from useConfig(). `onMapChange` (optional)
 // fires once per map switch — e.g. to refresh the strain graph.
@@ -67,7 +74,7 @@ export function useMapInfo(pool, { onMapChange } = {}) {
         mapInfo.Creator = beatmapMng.mapper
         mapInfo.Difficulty = beatmapMng.version
 
-        const bgUrl = tosuBgUrl(folders, files)
+        const bgUrl = beatmapBgUrl(beatmapMng.set, folders, files)
         // treat a changed background as a map change too, since unsubmitted maps
         // all report id/set === -1 and would otherwise never refresh
         if (beatmapMng.id != mapInfo.mapId || mapInfo.BGUrl !== bgUrl) {
