@@ -37,7 +37,7 @@ export function useMapInfo(pool, { onMapChange } = {}) {
         if (!beatmaps) return undefined
         return (
             beatmaps.find((b) => b.beatmap_id === id) ||
-            beatmaps.find((b) => b.title === title && b.artist === artist && b.version === version)
+            beatmaps.find((b) => b.title === title) // && b.artist === artist && b.version === version)
         )
     }
 
